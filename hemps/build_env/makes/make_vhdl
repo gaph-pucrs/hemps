@@ -1,0 +1,77 @@
+COR  ='\033[0;32m'
+NC   ='\033[0m' # No Color
+
+LIB=work
+
+COMP =vcom -work $(LIB)
+
+#VHDL files
+HEMPS_PKG	=hemps_pkg
+STAND		=standards
+TOP 		=hemps test_bench
+PE	 		=pe
+DMNI 		=dmni
+MEMORY 		=ram_master ram_slave
+PROCESSOR 	=mlite_pack UartFile alu bus_mux control mem_ctrl mult pc_next pipeline reg_bank shifter mlite_cpu
+ROUTER	 	=Hermes_buffer Hermes_crossbar Hermes_switchcontrol RouterCC
+
+HEMPS_PKG_SRC	= $(addprefix ../include/, 					$(HEMPS_PKG:=.vhd) 	)
+STAND_SRC	    = $(addprefix vhdl/, 						$(STAND:=.vhd) 		)
+TOP_SRC	    	= $(addprefix vhdl/, 						$(TOP:=.vhd) 		)
+PE_SRC			= $(addprefix vhdl/pe/, 					$(PE:=.vhd)   		)
+DMNI_SRC		= $(addprefix vhdl/pe/dmni/, 				$(DMNI:=.vhd) 		)
+MEMORY_SRC		= $(addprefix ../ram_pe/,						$(MEMORY:=.vhd) 	) 
+PROCESSOR_SRC	= $(addprefix vhdl/pe/processor/plasma/, 	$(PROCESSOR:=.vhd) 	)
+ROUTER_SRC		= $(addprefix vhdl/pe/router/, 				$(ROUTER:=.vhd) 	)
+
+default: lib $(HEMPS_PKG) $(STAND) $(ROUTER) $(PROCESSOR) $(DMNI) $(MEMORY) $(PE) $(TOP)
+
+lib:
+	@vlib $(LIB)
+	@vmap $(LIB) $(LIB)
+
+$(HEMPS_PKG): $(HEMPS_PKG_SRC)
+	echo $(HEMPS_PKG_SRC)
+	echo $(HEMPS_PKG)
+	echo $@
+	@printf "${COR}Compiling VHDL source: %s ...${NC}\n" "$(dir $<)$@.vhd"
+	$(COMP) $(dir $<)$@.vhd
+
+$(STAND): $(STAND_SRC)
+	@printf "${COR}Compiling VHDL source: %s ...${NC}\n" "$(dir $<)$@.vhd"
+	$(COMP) $(dir $<)$@.vhd
+
+$(TOP): $(TOP_SRC)
+	@printf "${COR}Compiling VHDL source: %s ...${NC}\n" "$(dir $<)$@.vhd"
+	$(COMP) $(dir $<)$@.vhd
+
+$(PE): $(PE_SRC)
+	@printf "${COR}Compiling VHDL source: %s ...${NC}\n" "$(dir $<)$@.vhd"
+	$(COMP) $(dir $<)$@.vhd
+
+$(DMNI): $(DMNI_SRC)
+	@printf "${COR}Compiling VHDL source: %s ...${NC}\n" "$(dir $<)$@.vhd"
+	$(COMP) $(dir $<)$@.vhd
+
+$(MEMORY): $(MEMORY_SRC)
+	@printf "${COR}Compiling VHDL source: %s ...${NC}\n" "$(dir $<)$@.vhd"
+	$(COMP) $(dir $<)$@.vhd
+
+$(PROCESSOR): $(PROCESSOR_SRC)
+	@printf "${COR}Compiling VHDL source: %s ...${NC}\n" "$(dir $<)$@.vhd"
+	$(COMP) $(dir $<)$@.vhd
+
+$(ROUTER): $(ROUTER_SRC)
+	@printf "${COR}Compiling VHDL source: %s ...${NC}\n" "$(dir $<)$@.vhd"
+	$(COMP) $(dir $<)$@.vhd
+
+clean:
+	@printf "Cleaning up\n"
+	@rm -f *~
+	@rm -f *.o
+	@rm -f *.exe
+	@rm -f HeMPS
+	@rm -f repository*
+	@rm -f ../modelsim.ini
+	@rm -rf ../work
+	@rm -rf ../transcript

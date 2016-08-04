@@ -1,0 +1,13 @@
+#!/usr/bin/env python
+import os
+
+#This script encapsulate the call of the HeMPS_Debugger.jar
+
+platform_path = ""
+
+try:
+    platform_path = sys.argv[1]
+except:
+    pass
+
+os.system("java -jar $HEMPS_PATH/build_env/HeMPS_Debugger.jar "+platform_path)
