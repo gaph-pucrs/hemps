@@ -1,0 +1,30 @@
+#!/usr/bin/env python
+import os
+import sys
+
+#This script encapsulate the call for testcase_builder.py
+#It name recall hemps-generation
+
+HEMPS_PATH = os.getenv("HEMPS_PATH", 0)
+if HEMPS_PATH == 0:
+    sys.exit("ERROR: Enviroment variable: HEMPS_PATH not defined")
+
+try:
+    testcase_file_path = sys.argv[1]
+    if os.path.exists(testcase_file_path) == False:
+        raise Exception()
+except:
+    sys.exit("ERROR: Invalid testcase file path passed as 1st argument, e.g: hemps-run <my_testcase_file>.yaml <time_in_ms>")
+
+simul_time = 1
+try:
+    simul_time = int(sys.argv[2])
+except:
+    pass
+
+exit_status = os.system("python "+ HEMPS_PATH+"/build_env/testcase_builder.py "+ testcase_file_path + " " + str(simul_time))
+
+if exit_status == 0:
+    print "Testcase directory " +(testcase_file_path[:-5])+ " from "+testcase_file_path+ " generated successfully"
+else:
+    print sys.exit("*** Error in the testcase generation")

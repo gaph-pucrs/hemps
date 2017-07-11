@@ -1,0 +1,36 @@
+hw:
+   page_size_KB:  32
+   tasks_per_PE: 3     
+   repository_size_MB:  1
+   model_description: sc    # sc (gcc) | scmod (questa) | vhdl
+   noc_buffer_size: 8       # must be power of 2 
+   mpsoc_dimension: [4,4]     # for while, must be a square shape
+   cluster_dimension: [2,2] # for while, must be a square shape
+   master_location: LB      # LB
+sw:
+   mapping_algorithm: WithLoad  # WithLoad
+   task_scheduler:  round_robin # round_robing | lst
+
+#--------- Application definitions -----------
+#Example of an application defining static mapping for two tasks
+#- name: mpeg
+#    start_time_ms: 0 #any unsigned integer number
+#    static_mapping:
+#      print: [1,1] # Task print from app mpeg will be mapped as static at address X=1, Y=1
+#      start: [0,1] # Task start from app mpeg will be mapped as static at address X=1, Y=1
+#
+# Attention: When using static mapping all application must be manually sorted by start time
+apps:                
+  - name: mpeg
+    start_time_ms: 0 #any unsigned integer number
+  - name: dtw
+    start_time_ms: 0 #any unsigned integer number
+  - name: audio_video
+    start_time_ms: 0 #any unsigned integer number
+  - name: dijkstra
+    start_time_ms: 2 #any unsigned integer number
+  - name: synthetic
+    start_time_ms: 2 #any unsigned integer number
+  - name: dtw
+    start_time_ms: 2 #any unsigned integer number
+    

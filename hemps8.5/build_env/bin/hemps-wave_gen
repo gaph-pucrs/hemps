@@ -1,0 +1,174 @@
+#!/usr/bin/env python
+import sys
+import os
+
+#http://stackoverflow.com/questions/4383571/importing-files-from-different-folder-in-python
+sys.path.insert(0, os.path.dirname(os.path.abspath(__file__))+"/../scripts")
+from yaml_intf import *
+
+## @package wave_generator
+#This scripts generates the wave.do inside the testcase dir. Modify this scripts as you need to improve debuggability in your project
+
+def main():
+    #HEMPS_PATH - must to point to the root directory of hemps
+    HEMPS_PATH = os.getenv("HEMPS_PATH", 0)
+    
+    #Test if testcase file HEMPS_PATH is valid
+    if HEMPS_PATH == 0:
+        sys.exit("ENV PATH ERROR: HEMPS_PATH not defined")
+    
+    #Test if testcase file is passed as arg1 by testing the lenght of argv list
+    if len(sys.argv) <= 1 :
+        sys.exit("ARG ERROR: arg1 must be a valid testcase file with a extension .yaml (<my_testcase>.yaml) ")
+    
+    #testcase name without .yaml
+    INPUT_TESTCASE_FILE_PATH = sys.argv[1]
+
+    if os.path.exists(INPUT_TESTCASE_FILE_PATH) == False:
+        sys.exit("ARG ERROR: arg1 must be a valid testcase file with a extension .yaml (<my_testcase>.yaml) ")
+    
+    #Gets the testcase name:
+    path_list = INPUT_TESTCASE_FILE_PATH.split("/") #The testcase path can have severals '/' into its composition
+    input_yaml_name = path_list[len(path_list)-1] #Gets the last element of the split list
+    TESTCASE_NAME = input_yaml_name.split(".")[0]
+    
+    #Reads some importats parameters from testcase
+    yaml_reader = get_yaml_reader(INPUT_TESTCASE_FILE_PATH)
+    
+    generate_wave(TESTCASE_NAME, yaml_reader)
+
+
+def generate_wave(testcase_path, yaml_r):
+    
+    system_model = get_model_description(yaml_r)
+    
+    wave_lines = generate_wave_generic(yaml_r, system_model)
+
+    wave_path = testcase_path + "/wave.do"
+    try:
+        if not os.path.isfile(wave_path):
+            f = open(wave_path, "w+")
+            f.writelines(wave_lines)
+            f.close()
+    except:
+        sys.exit("\n[WARN] wave.do not created, testcase directory not created yet!!\n")
+        pass
+
+def generate_wave_generic(yaml_r, system_model):
+    
+    mpsoc_x_dim =       get_mpsoc_x_dim(yaml_r)
+    mpsoc_y_dim =       get_mpsoc_y_dim(yaml_r)
+    
+    wave_lines = []
+    wave_lines.append("onerror {resume}\n")
+    wave_lines.append("quietly WaveActivateNextPane {} 0\n") 
+    
+    wave_lines.append("add wave -noupdate /test_bench/HeMPS/clock\n")
+    
+    pe_index = 0
+    
+    for x in range(0, mpsoc_x_dim):
+        for y in range(0, mpsoc_y_dim):
+            
+            pe_index = (y * mpsoc_x_dim) + x
+            
+            if system_model == "scmod":
+                pe = str(x) + "x" + str(y)
+                pe_group = "add wave -noupdate  -group {PE "+pe+"} "
+                signal_path = "-radix hexadecimal /test_bench/HeMPS/PE"+pe+"/"
+            else: #vhdl
+                pe = str(pe_index)
+                pe_group = "add wave -noupdate  -group {PE"+str(x) + "x" + str(y)+"} "
+                signal_path = "-radix hexadecimal /test_bench/HeMPS/proc("+pe+")/PE/"
+            
+            
+            cpu_group =  "-group CPU_"+pe+" " 
+            
+            repository = "-group {repositoriy} "
+            
+            if pe == "0x0" or pe == "0":
+                if system_model == "scmod":
+                    wave_lines.append(pe_group + repository + "/test_bench/HeMPS/mem_addr(0)\n")
+                    wave_lines.append(pe_group + repository + "/test_bench/HeMPS/data_read(0)\n")
+                    wave_lines.append(pe_group + repository + "/test_bench/HeMPS/ack_app(0)\n")
+                    wave_lines.append(pe_group + repository + "/test_bench/HeMPS/req_app(0)\n")
+                else:
+                    wave_lines.append(pe_group + repository + "/test_bench/HeMPS/repo_address\n")
+                    wave_lines.append(pe_group + repository + "/test_bench/HeMPS/repo_data\n")
+                    wave_lines.append(pe_group + repository + "/test_bench/HeMPS/ack_app\n")
+                    wave_lines.append(pe_group + repository + "/test_bench/HeMPS/req_app\n")
+            
+            wave_lines.append(pe_group + cpu_group + signal_path + "/current_page\n")
+            wave_lines.append(pe_group + cpu_group + signal_path + "/irq_mask_reg\n")
+            wave_lines.append(pe_group + cpu_group + signal_path + "/irq_status\n") 
+            wave_lines.append(pe_group + cpu_group + signal_path + "/irq\n") 
+            wave_lines.append(pe_group + cpu_group + signal_path + "/cpu_mem_address_reg\n") 
+            wave_lines.append(pe_group + cpu_group + signal_path + "/cpu_mem_data_write_reg\n") 
+            wave_lines.append(pe_group + cpu_group + signal_path + "/cpu_mem_data_read\n") 
+            wave_lines.append(pe_group + cpu_group + signal_path + "/cpu_mem_write_byte_enable\n") 
+            
+            router_config = "-group router_config_"+pe+" "
+            
+            dmni_group = "-group {DMNI "+pe+"} "
+            pe_path = signal_path
+            signal_path = pe_path+"/dmni"
+            send_ps = "-group send_"+pe+"_PS "
+            receive_ps = "-group receive_"+pe+"_PS "
+            
+            wave_lines.append(pe_group + dmni_group + signal_path + "/operation\n");
+            
+                    
+            wave_lines.append(pe_group + dmni_group + send_ps + signal_path + "/tx\n") 
+            wave_lines.append(pe_group + dmni_group + send_ps + signal_path + "/data_out\n")
+            wave_lines.append(pe_group + dmni_group + send_ps + signal_path + "/credit_i\n") 
+            
+            wave_lines.append(pe_group + dmni_group + receive_ps + signal_path + "/rx\n") 
+            wave_lines.append(pe_group + dmni_group + receive_ps + signal_path + "/data_in\n") 
+            wave_lines.append(pe_group + dmni_group + receive_ps + signal_path + "/credit_o\n") 
+                
+            config = "-group config_"+pe+" "
+            
+            wave_lines.append(pe_group + dmni_group + config + signal_path + "/set_address\n") 
+            wave_lines.append(pe_group + dmni_group + config + signal_path + "/set_address_2\n") 
+            wave_lines.append(pe_group + dmni_group + config + signal_path + "/set_size\n")
+            wave_lines.append(pe_group + dmni_group + config + signal_path + "/set_size_2\n") 
+            wave_lines.append(pe_group + dmni_group + config + signal_path + "/set_op\n") 
+            wave_lines.append(pe_group + dmni_group + config + signal_path + "/start\n") 
+            wave_lines.append(pe_group + dmni_group + config + signal_path + "/config_data\n") 
+            
+            
+            input_name = "EAST", "WEST", "NORTH", "SOUTH", "LOCAL"
+            signal_path = pe_path+"router/"
+            router_group = "-group {router "+pe+"} "
+            wave_lines.append(pe_group + router_group + "-divider receive\n") 
+            count=0
+            for input in input_name:
+                p = str(count)
+                i_name = "input_"+input;
+                input_group = "-group {"+i_name+" "+pe+"} "
+                wave_lines.append(pe_group + router_group + input_group + signal_path + "rx("+p+")\n") 
+                wave_lines.append(pe_group + router_group + input_group + signal_path + "data_in("+p+")\n")  
+                wave_lines.append(pe_group + router_group + input_group + signal_path + "credit_o("+p+")\n")
+                count= count+1
+                
+            wave_lines.append(pe_group + router_group + "-divider send\n")
+            count=0
+            for input in input_name:
+                p = str(count)
+                i_name = "output_"+input;
+                input_group = "-group {"+i_name+" "+pe+"} "
+                wave_lines.append(pe_group + router_group + input_group + signal_path + "tx("+p+")\n") 
+                wave_lines.append(pe_group + router_group + input_group + signal_path + "data_out("+p+")\n")  
+                wave_lines.append(pe_group + router_group + input_group + signal_path + "credit_i("+p+")\n")  
+                count = count+1;
+            
+    wave_lines.append("configure wave -signalnamewidth 1\n")
+    wave_lines.append("configure wave -namecolwidth 217\n")
+    wave_lines.append("configure wave -timelineunits ns\n")
+    
+    return  wave_lines
+    
+
+#Call of function main, this aproaches enables to call a fucntion before it declaration
+main()
+    

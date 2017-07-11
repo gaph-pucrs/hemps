@@ -1,0 +1,84 @@
+#!/usr/bin/env python
+import os
+import sys
+import subprocess
+from time import sleep
+
+#1. This script encapsulate the call for testcase_builder.py
+#2. Call the makefile (make all) inside the created testcase direcoty. This make call all the scripts to build apps, hw, kernel
+#3. Simulate the system, if sc(gcc) it execute ./HeMPS, is scmod or vhdl it open ModelSim/Questa
+
+
+ENABLE_GUI=1
+
+def call_debugger(testacase_path):
+    tarffic_router_path = testacase_path+"/debug/traffic_router.txt"
+    platform_path = testacase_path+"/debug/platform.cfg"
+    
+    try_number = 0
+    not_found = False
+    
+    while (os.path.exists(platform_path) == False or os.path.exists(tarffic_router_path) == False):
+        if try_number == 10:
+            not_found = True
+            break;
+        sleep(0.5)
+        try_number = try_number + 1
+        
+    if not_found == False:
+        os.system("java -jar "+HEMPS_PATH+"/build_env/HeMPS_Debugger.jar "+platform_path)
+
+
+HEMPS_PATH = os.getenv("HEMPS_PATH", 0)
+if HEMPS_PATH == 0:
+    sys.exit("ERROR: Enviroment variable: HEMPS_PATH not defined")
+
+sys.path.insert(0, HEMPS_PATH+"/build_env/scripts")
+from yaml_intf import *
+
+
+
+try:
+    testcase_file_path = sys.argv[1]
+    if os.path.exists(testcase_file_path) == False:
+        raise Exception()
+except:
+    sys.exit("ERROR: Invalid testcase file path passed as 1st argument, e.g: hemps-run <my_testcase>.yaml <time_in_ms>")
+
+try:
+    simul_time = int(sys.argv[2])
+    if simul_time < 0:
+        raise Exception()
+except:
+    sys.exit("ERROR: Invalid simulation time passed as 2nd argument, e.g: hemps-run <my_testcase>.yaml <time_in_ms>")
+    
+subprocess.call("python "+ HEMPS_PATH+"/build_env/testcase_builder.py "+ testcase_file_path + " " + str(simul_time), shell=True)
+
+
+
+yaml_r = get_yaml_reader(testcase_file_path)
+ 
+ 
+system_model = get_model_description(yaml_r)
+
+
+testacase_dir = os.path.splitext(testcase_file_path)[0]
+ 
+ 
+exit_code = subprocess.call("make -C "+testacase_dir, shell=True)
+
+if exit_code != 0:
+    sys.exit("\n*** Error: hemps-run stopped !!!\n");
+ 
+ 
+if system_model == "sc":
+     
+    os.system("cd "+testacase_dir+";./"+testacase_dir+" -c "+str(simul_time)+" &" )
+     
+elif system_model == "scmod" or system_model == "vhdl":
+     
+    subprocess.call("cd "+testacase_dir+"; vsim -do sim.do", shell=True)
+    
+if ENABLE_GUI == 1:
+    if system_model == "sc":
+        call_debugger(testacase_dir)
