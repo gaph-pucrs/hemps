@@ -80,8 +80,11 @@ architecture HeMPS of HeMPS is
                 generic map (
                         router_address    	=> RouterAddress(i),
                         kernel_type			=> pe_type(i),
-                        log_file            => log_filename(i)
-                        )
+                        log_file            => log_filename(i),
+                        manual_EAST => manualEASTByPos(i),
+                        manual_WEST => manualWESTByPos(i),
+                        manual_NORTH => manualNORTHByPos(i),
+                        manual_SOUTH => manualSOUTHByPos(i))
                 port map(
                         clock 				=> clock,
                         reset 				=> reset,

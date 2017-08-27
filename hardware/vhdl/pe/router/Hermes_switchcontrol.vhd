@@ -18,6 +18,12 @@ use IEEE.STD_LOGIC_unsigned.all;
 use work.standards.all;
 
 entity SwitchControl is
+generic (
+  manual_NORTH : boolean := false;
+  manual_SOUTH : boolean := false;
+  manual_EAST: boolean := false;
+  manual_WEST: boolean := false;
+  );
 port(
         clock :   in  std_logic;
         reset :   in  std_logic;
@@ -48,6 +54,10 @@ signal lx,ly,tx,ty: regquartoflit := (others=> '0');
 signal auxfree: regNport := (others=> '0');
 signal source:  arrayNport_reg3 := (others=> (others=> '0'));
 signal sender_ant: regNport := (others=> '0');
+
+signal manual_routing_flag : std_logic;
+signal manual_routing_sel : integer range 0 to (NPORT-1) := 0;
+signal manual_routing_en : boolean;
 
 begin
 
@@ -98,8 +108,11 @@ begin
         tx <= header((METADEFLIT - 1) downto QUARTOFLIT);
         ty <= header((QUARTOFLIT - 1) downto 0);
 
-        dirx <= WEST when lx > tx else EAST;
-        diry <= NORTH when ly < ty else SOUTH;
+        manual_routing_flag <= header(TAM_FLIT-1);
+        manual_routing_sel <= header(TAM_FLIT-2 downto TAM_FLIT-3);
+
+        dirx <= WEST when lx > tx or (manual_WEST and manual_routing_sel=WEST) else EAST;
+        diry <= NORTH when ly < ty or (manual_NORTH and manual_routing_sel=NORTH) else SOUTH;
 
         process(reset,clock)
         begin
@@ -137,21 +150,62 @@ begin
         -- S7 -> O estado S7 � necess�rio para que a porta selecionada para roteamento baixe o sinal
         --       h.
         --
-        process(ES,ask,h,lx,ly,tx,ty,auxfree,dirx,diry)
+
+        process(manual_routing_flag, manual_routing_sel)
         begin
-                case ES is
-                        when S0 => PES <= S1;
-                        when S1 => if ask='1' then PES <= S2; else PES <= S1; end if;
-                        when S2 => PES <= S3;
-                        when S3 => if lx = tx and ly = ty and auxfree(LOCAL)='1' then PES<=S4;
-                                        elsif lx /= tx and auxfree(dirx)='1' then PES<=S5;
-                                        elsif lx = tx and ly /= ty and auxfree(diry)='1' then PES<=S6;
-                                        else PES<=S1; end if;
-                        when S4 => PES<=S7;
-                        when S5 => PES<=S7;
-                        when S6 => PES<=S7;
-                        when S7 => PES<=S1;
-                end case;
+          if manual_routing_flag = '1' then
+            case manual_routing_sel is
+              when WEST   => manual_routing_en <= manual_WEST;
+              when EAST   => manual_routing_en <= manual_EAST;
+              when NORTH  => manual_routing_en <= manual_NORTH;
+              when SOUTH  => manual_routing_en <= manual_SOUTH;
+              when others => manual_routing_en <= false;
+            end case;
+          else
+            manual_routing_en <= false;
+          end if;
+        end process;
+
+        process(ES, ask, h, lx, ly, tx, ty, auxfree, dirx, diry)
+        begin
+          case ES is
+            when S0 => PES <= S1;
+            when S1 =>
+              if ask = '1' then PES <= S2; else PES <= S1; end if;
+            when S2 => PES <= S3;
+            when S3 =>
+              if lx = tx and ly = ty then
+                if (not manual_routing_en) and auxfree(LOCAL) = '1' then PES <= S4;
+                elsif manual_routing_en then
+                  case manual_routing_sel is
+                    when EAST|WEST =>
+                      if auxfree(dirx) = '1' then
+                        PES <= S5;
+                      else
+                        PES <= S1;
+                      end if;
+                    when NORTH|SOUTH =>
+                      if auxfree(diry) = '1' then
+                        PES <= S6;
+                      else
+                        PES <= S1;
+                      end if;
+                    when others =>
+                      if auxfree(LOCAL) = '1' then
+                        PES <= S4;
+                      else
+                        PES <= S1;
+                      end if;
+                  end case;
+                end if;
+              elsif lx /= tx and auxfree(dirx) = '1' then PES             <= S5;
+              elsif lx = tx and ly /= ty and auxfree(diry) = '1' then PES <= S6;
+              else PES                                                    <= S1; end if;
+            when S4 => PES <= S7;
+            when S5 => PES <= S7;
+            when S6 => PES <= S7;
+            when S7 => PES <= S1;
+          end case;
         end process;
 
         ------------------------------------------------------------------------------------------------------

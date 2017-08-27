@@ -17,35 +17,40 @@ library unisim;
 use unisim.vcomponents.all;
 
 entity pe is
-    generic 
+  generic
     (
-        log_file            : string := "output.txt";
-        router_address      : regmetadeflit:= (others=>'0');
-        kernel_type			: kernel_str
-    );
-    port 
-    (  
-    	clock                   : in  std_logic;
-        reset                   : in  std_logic;
-		-- NoC
-        clock_rx                : in  std_logic_vector(3 downto 0);
-        rx                      : in  std_logic_vector(3 downto 0);
-        data_in                 : in  arrayNPORT_1_regflit;
-        credit_o                : out std_logic_vector(3 downto 0);
-        clock_tx                : out std_logic_vector(3 downto 0);
-        tx                      : out std_logic_vector(3 downto 0);
-        data_out                : out arrayNPORT_1_regflit;
-        credit_i                : in  std_logic_vector(3 downto 0);
-        -- External Memory
-        repo_address                 : out std_logic_vector(29 downto 0);
-        repo_data_read               : in  std_logic_vector(31 downto 0);
-        ack_app                 : out  std_logic;
-        req_app                 : in  std_logic_vector(31 downto 0)
-        -- External Debug interface
+      log_file       : string        := "output.txt";
+      router_address : regmetadeflit := (others => '0');
+      kernel_type    : kernel_str
+      manual_NORTH   : boolean       := false;
+      manual_SOUTH   : boolean       := false;
+      manual_LOCAL   : boolean       := false;
+      manual_EAST    : boolean       := false;
+      manual_WEST    : boolean       := false;
+      );
+  port
+    (
+      clock          : in  std_logic;
+      reset          : in  std_logic;
+      -- NoC
+      clock_rx       : in  std_logic_vector(3 downto 0);
+      rx             : in  std_logic_vector(3 downto 0);
+      data_in        : in  arrayNPORT_1_regflit;
+      credit_o       : out std_logic_vector(3 downto 0);
+      clock_tx       : out std_logic_vector(3 downto 0);
+      tx             : out std_logic_vector(3 downto 0);
+      data_out       : out arrayNPORT_1_regflit;
+      credit_i       : in  std_logic_vector(3 downto 0);
+      -- External Memory
+      repo_address   : out std_logic_vector(29 downto 0);
+      repo_data_read : in  std_logic_vector(31 downto 0);
+      ack_app        : out std_logic;
+      req_app        : in  std_logic_vector(31 downto 0)
+      -- External Debug interface
 --        write_enable_debug      : out  std_logic;
 --        data_out_debug          : out  std_logic_vector(31 downto 0);
 --        busy_debug              : in std_logic
-    );
+      );
 end entity pe;
 
 architecture structural of pe is
@@ -167,20 +172,24 @@ slave: if kernel_type = "sla" generate
 		);
 end	generate;
 	
-	router : Entity work.RouterCC
-		generic map(address => router_address)
-		port map(
-			clock    => clock,
-			reset    => reset,
-			clock_rx => clock_rx_router,
-			rx       => rx_router,
-			data_in  => data_in_router,
-			credit_o => credit_o_router,
-			clock_tx => clock_tx_router,
-			tx       => tx_router,
-			data_out => data_out_router,
-			credit_i => credit_i_router
-		);
+       router : entity work.RouterCC
+         generic map(address      => router_address,
+                     manual_NORTH => manual_NORTH,
+                     manual_SOUTH => manual_SOUTH,
+                     manual_EAST  => manual_EAST,
+                     manual_WEST  => manual_WEST)
+         port map(
+           clock    => clock,
+           reset    => reset,
+           clock_rx => clock_rx_router,
+           rx       => rx_router,
+           data_in  => data_in_router,
+           credit_o => credit_o_router,
+           clock_tx => clock_tx_router,
+           tx       => tx_router,
+           data_out => data_out_router,
+           credit_i => credit_i_router
+           );
 
         
     dmni : entity work.dmni

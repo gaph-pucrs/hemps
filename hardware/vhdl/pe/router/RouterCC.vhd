@@ -25,14 +25,14 @@ use std.textio.all;
 use IEEE.NUMERIC_STD.all;
 
 entity traffic_monitor is
-   generic( ID : integer );
-port(
-      clock :     in std_logic;
-      reset :     in std_logic;
-      data_in :   in regflit;
-		address :	in regmetadeflit;
-      rx :        in std_logic;
-      credit_o :  in std_logic );
+  generic(ID           : integer);
+  port(
+    clock    : in std_logic;
+    reset    : in std_logic;
+    data_in  : in regflit;
+    address  : in regmetadeflit;
+    rx       : in std_logic;
+    credit_o : in std_logic);
 end traffic_monitor;
 
 architecture arq_traffic of traffic_monitor is
@@ -269,18 +269,22 @@ use std.textio.all;
 use IEEE.NUMERIC_STD.all;
 
 entity RouterCC is
-generic( address: regmetadeflit);
-port(
-        clock:     in  std_logic;
-        reset:     in  std_logic;
-        clock_rx:  in  regNport;
-        rx:        in  regNport;
-        data_in:   in  arrayNport_regflit;
-        credit_o:  out regNport;    
-        clock_tx:  out regNport;
-        tx:        out regNport;
-        data_out:  out arrayNport_regflit;
-        credit_i:  in  regNport);
+  generic(address      : regmetadeflit;
+          manual_NORTH : boolean := false;
+          manual_SOUTH : boolean := false;
+          manual_EAST  : boolean := false;
+          manual_WEST  : boolean := false);
+  port(
+    clock    : in  std_logic;
+    reset    : in  std_logic;
+    clock_rx : in  regNport;
+    rx       : in  regNport;
+    data_in  : in  arrayNport_regflit;
+    credit_o : out regNport;
+    clock_tx : out regNport;
+    tx       : out regNport;
+    data_out : out arrayNport_regflit;
+    credit_i : in  regNport);
 end RouterCC;
 
 architecture RouterCC of RouterCC is
@@ -307,7 +311,7 @@ begin
       credit_o <= credit_o_sig;
 		traffic_router: for i in 0 to (NPORT-1) generate 
 			 traffic_monit : entity work.traffic_monitor
-				  generic map( ID  =>  i )
+         generic map( ID  =>  i )
    			  port map(
    			  			 clock    =>  clock,
    			  			 reset    =>  reset,
@@ -393,18 +397,23 @@ begin
                 data_ack => data_ack(4),
                 credit_o => credit_o_sig(4));
 
-        SwitchControl : Entity work.SwitchControl(XY)
-        port map(
-                clock => clock,
-                reset => reset,
-                h => h,
-                ack_h => ack_h,
-                address => address,
-                data => data,
-                sender => sender,
-                free => free,
-                mux_in => mux_in,
-                mux_out => mux_out);
+       SwitchControl : Entity work.SwitchControl(XY)
+         generic map(
+           manual_NORTH => manual_NORTH,
+           manual_SOUTH => manual_SOUTH,
+           manual_EAST  => manual_EAST,
+           manual_WEST  => manual_WEST)
+         port map(
+           clock   => clock,
+           reset   => reset,
+           h       => h,
+           ack_h   => ack_h,
+           address => address,
+           data    => data,
+           sender  => sender,
+           free    => free,
+           mux_in  => mux_in,
+           mux_out => mux_out);
 
         CrossBar : Entity work.Hermes_crossbar
         port map(
