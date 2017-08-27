@@ -334,7 +334,52 @@ package body standards is
                         
                         return pos;
                         
-        end RouterPosition;
+                end RouterPosition;
+
+                function ManualEASTbyPos(router : integer) return boolean is
+                  variable pos : integer;
+                begin
+                  pos := RouterPosition(router);
+                  if (pos = TL) or (pos = CL) or (pos = BL) then
+                    return true;
+                  else
+                    return false;
+                  end if;
+                end ManualEASTbyPos;
+
+                function ManualWESTbyPos(router : integer) return boolean is
+                  variable pos : integer;
+                begin
+                  pos := RouterPosition(router);
+                  if (pos = TR) or (pos = CRX) or (pos = BR) then
+                    return true;
+                  else
+                    return false;
+                  end if;
+                end ManualWESTbyPos;
+
+                function ManualNORTHbyPos(router : integer) return boolean is
+                  variable pos : integer;
+                begin
+                  pos := RouterPosition(router);
+                  if (pos = TL) or (pos = TC) or (pos = TR) then
+                    return true;
+                  else
+                    return false;
+                  end if;
+                end ManualNORTHbyPos;
+
+                function ManualSOUTHbyPos(router : integer) return boolean is
+                  variable pos : integer;
+                begin
+                  pos := RouterPosition(router);
+                  if (pos = BR) or (pos = BC) or (pos = BR) then
+                    return true;
+                  else
+                    return false;
+                  end if;
+                end ManualSOUTHbyPos;
+
 
         function RouterAddress(router: integer) return std_logic_vector is
                 variable pos_x, pos_y   : regquartoflit; 
