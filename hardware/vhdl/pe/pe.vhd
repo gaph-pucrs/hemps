@@ -17,7 +17,7 @@ library unisim;
 use unisim.vcomponents.all;
 
 entity pe is
-  generic
+    generic 
     (
       log_file       : string        := "output.txt";
       router_address : regmetadeflit := (others => '0');
@@ -49,7 +49,7 @@ entity pe is
 --        write_enable_debug      : out  std_logic;
 --        data_out_debug          : out  std_logic_vector(31 downto 0);
 --        busy_debug              : in std_logic
-      );
+    );
 end entity pe;
 
 architecture structural of pe is
@@ -171,24 +171,20 @@ slave: if kernel_type = "sla" generate
 		);
 end	generate;
 	
-       router : entity work.RouterCC
-         generic map(address      => router_address,
-                     manual_NORTH => manual_NORTH,
-                     manual_SOUTH => manual_SOUTH,
-                     manual_EAST  => manual_EAST,
-                     manual_WEST  => manual_WEST)
-         port map(
-           clock    => clock,
-           reset    => reset,
-           clock_rx => clock_rx_router,
-           rx       => rx_router,
-           data_in  => data_in_router,
-           credit_o => credit_o_router,
-           clock_tx => clock_tx_router,
-           tx       => tx_router,
-           data_out => data_out_router,
-           credit_i => credit_i_router
-           );
+	router : Entity work.RouterCC
+		generic map(address => router_address)
+		port map(
+			clock    => clock,
+			reset    => reset,
+			clock_rx => clock_rx_router,
+			rx       => rx_router,
+			data_in  => data_in_router,
+			credit_o => credit_o_router,
+			clock_tx => clock_tx_router,
+			tx       => tx_router,
+			data_out => data_out_router,
+			credit_i => credit_i_router
+		);
 
         
     dmni : entity work.dmni
