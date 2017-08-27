@@ -81,10 +81,10 @@ architecture HeMPS of HeMPS is
                         router_address    	=> RouterAddress(i),
                         kernel_type			=> pe_type(i),
                         log_file            => log_filename(i),
-                        manual_EAST => manualEASTByPos(i),
-                        manual_WEST => manualWESTByPos(i),
-                        manual_NORTH => manualNORTHByPos(i),
-                        manual_SOUTH => manualSOUTHByPos(i))
+                        manual_EAST => ManualEASTByPos(i),
+                        manual_WEST => ManualWESTByPos(i),
+                        manual_NORTH => ManualNORTHByPos(i),
+                        manual_SOUTH => ManualSOUTHByPos(i))
                 port map(
                         clock 				=> clock,
                         reset 				=> reset,

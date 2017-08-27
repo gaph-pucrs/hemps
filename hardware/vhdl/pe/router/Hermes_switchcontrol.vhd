@@ -22,8 +22,7 @@ generic (
   manual_NORTH : boolean := false;
   manual_SOUTH : boolean := false;
   manual_EAST: boolean := false;
-  manual_WEST: boolean := false;
-  );
+  manual_WEST: boolean := false);
 port(
         clock :   in  std_logic;
         reset :   in  std_logic;
@@ -56,7 +55,7 @@ signal source:  arrayNport_reg3 := (others=> (others=> '0'));
 signal sender_ant: regNport := (others=> '0');
 
 signal manual_routing_flag : std_logic;
-signal manual_routing_sel : integer range 0 to (NPORT-1) := 0;
+signal manual_routing_sel : integer range 0 to (NPORT-1);
 signal manual_routing_en : boolean;
 
 begin
@@ -109,7 +108,7 @@ begin
         ty <= header((QUARTOFLIT - 1) downto 0);
 
         manual_routing_flag <= header(TAM_FLIT-1);
-        manual_routing_sel <= header(TAM_FLIT-2 downto TAM_FLIT-3);
+        manual_routing_sel <= conv_integer(header(TAM_FLIT-2 downto TAM_FLIT-3));
 
         dirx <= WEST when lx > tx or (manual_WEST and manual_routing_sel=WEST) else EAST;
         diry <= NORTH when ly < ty or (manual_NORTH and manual_routing_sel=NORTH) else SOUTH;

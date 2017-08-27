@@ -21,12 +21,11 @@ entity pe is
     (
       log_file       : string        := "output.txt";
       router_address : regmetadeflit := (others => '0');
-      kernel_type    : kernel_str
+      kernel_type    : kernel_str;
       manual_NORTH   : boolean       := false;
       manual_SOUTH   : boolean       := false;
       manual_EAST    : boolean       := false;
-      manual_WEST    : boolean       := false;
-      );
+      manual_WEST    : boolean       := false);
   port
     (
       clock          : in  std_logic;
