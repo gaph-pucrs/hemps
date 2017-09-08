@@ -8,7 +8,7 @@ COMP =vcom -work $(LIB)
 #VHDL files
 HEMPS_PKG	=hemps_pkg
 STAND		=standards
-TOP 		=hemps test_bench
+TOP 		=receive_data inject_data hemps test_bench
 PE	 		=pe
 DMNI 		=dmni
 MEMORY 		=ram_master ram_slave

@@ -39,7 +39,7 @@ architecture arq_traffic of traffic_monitor is
    type type_state is (Hheader, Ppayload, Sservice, task_allocation, task_menssage, cont_payload);
    signal SM_traffic_monitor : type_state;
    
-   signal tick_counter          :  reg32;
+  signal tick_counter          :  reg32;
 	signal target_router         : regflit;
 	signal header_time           : integer;
 	signal bandwidth_allocation  : integer;
@@ -308,7 +308,7 @@ begin
 -- Remova esse generate caso queira fazer uma synthesis.
 -- Esse generate é usado para o traffic_monitor das portas de entrada do router.
 --++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
-      credit_o <= credit_o_sig;
+    credit_o <= credit_o_sig;
 		traffic_router: for i in 0 to (NPORT-1) generate 
 			 traffic_monit : entity work.traffic_monitor
          generic map( ID  =>  i )
