@@ -33,6 +33,10 @@ typedef struct {
 		   unsigned int app_ID;
 	};
 
+	union {								//!<Added the Border Route Union - First Bit activates the routing and the next two define which path it will take
+		unsigned int border_route
+	}
+
 	union {								//!<Generic union
 	   unsigned int consumer_task;
 	   unsigned int cluster_ID;
