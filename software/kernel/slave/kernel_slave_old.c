@@ -221,6 +221,7 @@ void send_message_request(int producer_task, int consumer_task, unsigned int tar
 	send_packet(p, 0, 0);
 }
 
+
 /** Useful function to writes a message into the task page space
  * \param task_tcb_ptr TCB pointer of the task
  * \param msg_lenght Lenght of the message to be copied
@@ -465,75 +466,12 @@ int Syscall(unsigned int service, unsigned int arg0, unsigned int arg1, unsigned
 
 			return 1;
 
-			//Bruno Modification's 15/09
-			//These changes were made in order to be able to send data out of the NoC.
-			//Concept is based on sending the first bit high will enable the function and the 2 others decide where to send it (in the switchcontrol).
-
 		break;
-
-		case TRANSIT:
-			consumer_task =  current->id;
-			producer_task = (int) arg0;
-
-			appID = consumer_task >> 8;
-			// Here we shift the arg1
-			producer_task = (arg1 << 8) | producer_task;
-
-			puts("TRANSIT - prod: "); puts(itoa(producer_task)); putsv(" consumer ", consumer_task);
-
-			producer_PE = get_task_location(producer_task);
-
-			//Test if the producer task is not allocated
-			if (producer_PE == -1){
-				//Task is blocked until its a TASK_RELEASE packet
-				current->scheduling_ptr->status = BLOCKED;
-				return 0;
-			}
-			if (producer_PE == net_address){ //Local producer
-				//Searches if the message is in PIPE (local producer)
-				pipe_ptr = remove_PIPE(producer_task, consumer_task);
-
-				if (pipe_ptr == 0){
-
-					//Stores the request into the message request table (local producer)
-					insert_message_request(producer_task, consumer_task, net_address);
-
-				} else {
-					//Message was found in pipe, writes to the consumer page address (local producer)
-					msg_write = (Message*) arg2;
-					msg_write = (Message*)((current->offset) | ((unsigned int)msg_write));
-					msg_write->length = pipe_ptr->message.length;
-					for (int i = 0; i<msg_write->length; i++) {
-						msg_write->msg[i] = pipe_ptr->message.msg[i];
-					}
-					return 1;
-				}
-			} else 
-			{ //Remote producer : Sends the message request (remote producer)
-
-				//Deadlock avoidance: avoids to send a packet when the DMNI is busy in send process
-				// Revisar para fazer um pooling ao invés de um if aqui (vai ficar bloqueante).
-				while( MemoryRead(DMNI_SEND_ACTIVE) )
-					return 0;
-				// Mover o generateinjection aqui para dentro e usar o send packet na propria syscall
-				ServiceHeader *p = get_service_header_slot();
-				p-> header = producer_task;
-				p-> service = BORDER_ROUTE;
-				p-> requesting_processor = net_address;
-				p-> producer_task = producer_task;
-				p-> consumer_task = consumer_task;
-				//p-> msg_lenght=3333;
-				//p-> tasks_of_same_app=4444;
-				//p-> code_size=5555;
-				//p-> bss_size=6666;
-				//p-> initial_address=7777;
-    			send_packet(p, (unsigned int)msg_write->msg, msg_write->length);
-	
-			}
-			break;
-	return 0;
 	}
+
+	return 0;
 }
+
 /** Handles a new packet from NoC
  */
 int handle_packet(volatile ServiceHeader * p) {

@@ -21,8 +21,9 @@
 #define READPIPE  			2
 #define GETTICK   			3
 #define ECHO      			4
-#define	 REALTIME			5
-
+#define	REALTIME			5
+#define TRANSIT 			6
+	
 #define MemoryWrite(A,V) *(volatile unsigned int*)(A)=(V)
 #define TRUE	1
 #define FALSE	0
@@ -34,6 +35,10 @@ extern int SystemCall();
 #define GetTick() SystemCall(GETTICK,0,0,0)
 #define Echo(str) SystemCall(ECHO, (char*)str,0,0)
 #define exit() while(!SystemCall(EXIT, 0, 0, 0))
+
+// Bruno's modification 14/09 - The change reflects the need of a transit message to send packets outside the NoC.
+// The call is Target (Border Router, out_target (00 - South, 01 - West, 10 - East, 11 - North), message (payload))
+#define Transit(target, out_target, msg) while (!SystemCall(TRANSIT, target, out_target, (unsigned int*)msg))
 
 //Real-Time API - time represented in microseconds
 #define RealTime(period, deadline, execution_time) while(!SystemCall(REALTIME, period, deadline, execution_time))
