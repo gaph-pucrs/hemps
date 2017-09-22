@@ -8,7 +8,7 @@
  * Research group: GAPH-PUCRS   -  contact:  fernando.moraes@pucrs.br
  *
  * \brief
- * This module defines function relative to boarder routing.
+ * This module defines function relative to border routing.
  * \detailed
  * 
  */
@@ -17,7 +17,7 @@
 #define BORDER_ROUTE_H_
 
 #include "../../include/kernel_pkg.h"
-#include "boarder_route.h"
+#include "border_route.h"
 /**
  * \brief This structure stores the location (slave process address) of the other task
  */
@@ -27,6 +27,6 @@ struct packed_struct {
   unsigned int f3:1;
 }
 
-int boarder_route(unsigned int f1, unsigned int f2, unsigned int f3);
+int border_route(unsigned int f1, unsigned int f2, unsigned int f3);
 
 #endif /* BORDER_ROUTE_H_ */

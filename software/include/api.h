@@ -22,11 +22,19 @@
 #define GETTICK   			3
 #define ECHO      			4
 #define	REALTIME			5
-#define TRANSIT 			6
+#define TRANSMIT 			6
 	
 #define MemoryWrite(A,V) *(volatile unsigned int*)(A)=(V)
 #define TRUE	1
 #define FALSE	0
+
+/* Manual Routing destination ports */
+#define MANUAL_EAST  0x80000000
+#define MANUAL_WEST  0xA0000000
+#define MANUAL_NORTH 0xC0000000
+#define MANUAL_SOUTH 0xE0000000
+
+#define ROUTER_ADDR(x, y) (((x<<8)|x)&0xFFFF)
 
 extern int SystemCall();
 
@@ -37,8 +45,8 @@ extern int SystemCall();
 #define exit() while(!SystemCall(EXIT, 0, 0, 0))
 
 // Bruno's modification 14/09 - The change reflects the need of a transit message to send packets outside the NoC.
-// The call is Target (Border Router, out_target (00 - South, 01 - West, 10 - East, 11 - North), message (payload))
-#define Transit(target, out_target, msg) while (!SystemCall(TRANSIT, target, out_target, (unsigned int*)msg))
+// The call is Target (ROUTER_ADDR(x,y)|MANUAL_PORT) , message (payload), payload len in flits)
+#define Transmit(target, msg, len) while (!SystemCall(TRANSMIT, target, (unsigned int*)msg, len))
 
 //Real-Time API - time represented in microseconds
 #define RealTime(period, deadline, execution_time) while(!SystemCall(REALTIME, period, deadline, execution_time))

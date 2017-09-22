@@ -99,14 +99,12 @@ void send_packet(ServiceHeader *p, unsigned int initial_address, unsigned int dm
 	MemoryWrite(DMNI_ADDRESS, (unsigned int) p);
 
 	if (dmni_msg_size > 0){
-
 		MemoryWrite(DMNI_SIZE_2, dmni_msg_size);
 		MemoryWrite(DMNI_ADDRESS_2, initial_address);
 	}
 
 	MemoryWrite(DMNI_OP, READ);
 	MemoryWrite(DMNI_START, 1);
-
 }
 
 /**Function that abstracts the process to read a generic packet from NoC by programming the DMNI
