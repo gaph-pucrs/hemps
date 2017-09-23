@@ -110,8 +110,8 @@ begin
         manual_routing_flag <= header(TAM_FLIT-1);
         manual_routing_sel <= conv_integer(header(TAM_FLIT-2 downto TAM_FLIT-3));
 
-        dirx <= WEST when lx > tx or (manual_WEST and manual_routing_sel=WEST) else EAST;
-        diry <= NORTH when ly < ty or (manual_NORTH and manual_routing_sel=NORTH) else SOUTH;
+        dirx <= WEST when lx > tx or (manual_routing_en and manual_routing_sel=WEST) else EAST;
+        diry <= NORTH when ly < ty or (manual_routing_en and manual_routing_sel=NORTH) else SOUTH;
 
         process(reset,clock)
         begin
@@ -165,7 +165,7 @@ begin
           end if;
         end process;
 
-        process(ES, ask, h, lx, ly, tx, ty, auxfree, dirx, diry)
+        process(ES, ask, auxfree, dirx, diry, lx, ly, manual_routing_en, manual_routing_sel, tx, ty)
         begin
           case ES is
             when S0 => PES <= S1;

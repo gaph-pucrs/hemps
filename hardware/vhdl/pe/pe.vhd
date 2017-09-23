@@ -170,20 +170,24 @@ slave: if kernel_type = "sla" generate
 		);
 end	generate;
 	
-	router : Entity work.RouterCC
-		generic map(address => router_address)
-		port map(
-			clock    => clock,
-			reset    => reset,
-			clock_rx => clock_rx_router,
-			rx       => rx_router,
-			data_in  => data_in_router,
-			credit_o => credit_o_router,
-			clock_tx => clock_tx_router,
-			tx       => tx_router,
-			data_out => data_out_router,
-			credit_i => credit_i_router
-		);
+       router : entity work.RouterCC
+         generic map(address      => router_address,
+                     manual_NORTH => manual_NORTH,
+                     manual_SOUTH => manual_SOUTH,
+                     manual_EAST  => manual_EAST,
+                     manual_WEST  => manual_WEST)
+         port map(
+           clock    => clock,
+           reset    => reset,
+           clock_rx => clock_rx_router,
+           rx       => rx_router,
+           data_in  => data_in_router,
+           credit_o => credit_o_router,
+           clock_tx => clock_tx_router,
+           tx       => tx_router,
+           data_out => data_out_router,
+           credit_i => credit_i_router
+           );
 
         
     dmni : entity work.dmni

@@ -342,7 +342,7 @@ begin
 
 end RouterPosition;
 
-function ManualEASTbyPos(router : integer) return boolean is
+function ManualWESTbyPos(router : integer) return boolean is
   variable pos : integer;
 begin
   pos := RouterPosition(router);
@@ -351,9 +351,9 @@ begin
   else
     return false;
   end if;
-end ManualEASTbyPos;
+end ManualWESTbyPos;
 
-function ManualWESTbyPos(router : integer) return boolean is
+function ManualEASTbyPos(router : integer) return boolean is
   variable pos : integer;
 begin
   pos := RouterPosition(router);
@@ -362,7 +362,7 @@ begin
   else
     return false;
   end if;
-end ManualWESTbyPos;
+end ManualEASTbyPos;
 
 function ManualNORTHbyPos(router : integer) return boolean is
   variable pos : integer;
@@ -379,7 +379,7 @@ function ManualSOUTHbyPos(router : integer) return boolean is
   variable pos : integer;
 begin
   pos := RouterPosition(router);
-  if (pos = BR) or (pos = BC) or (pos = BR) then
+  if (pos = BL) or (pos = BC) or (pos = BR) then
     return true;
   else
     return false;
