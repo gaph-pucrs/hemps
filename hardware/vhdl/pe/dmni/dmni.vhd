@@ -40,6 +40,7 @@ entity dmni is
         intr            : out  std_logic;
         send_active     : out  std_logic;
         receive_active  : out  std_logic;
+        reset_dmni      : out  std_logic;
         -- Memory interface
         mem_address    : out std_logic_vector(31 downto 0);
         mem_data_write : out std_logic_vector(31 downto 0);
@@ -62,7 +63,7 @@ architecture dmni of dmni is
    constant DMNI_TIMER: std_logic_vector(4 downto 0):="10000";
    constant WORD_SIZE: std_logic_vector(4 downto 0):="00100";
    
-   type dmni_state is (WAIT_state, LOAD, COPY_FROM_MEM, COPY_TO_MEM, FINISH);
+   type dmni_state is (WAIT_state, LOAD, COPY_FROM_MEM, COPY_TO_MEM, COPY_TO_MEM_DMA, FINISH);
    signal DMNI_Send: dmni_state;
    signal DMNI_Receive: dmni_state;
    
@@ -103,6 +104,12 @@ architecture dmni of dmni is
    signal send_active_2    : std_logic;
    signal receive_active_2 : std_logic;
    signal intr_counter_temp : std_logic_vector(3 downto 0);
+   
+   signal reset_dmni_s     : std_logic;
+   signal payload_fix      : regflit;
+   signal sizedata_fix      : regflit;
+   signal novo_pacote      : std_logic;   
+   signal is_dmma          : std_logic;      
 begin
   --config
   proc_config: process(clock)
@@ -144,7 +151,7 @@ begin
           case ARB is                
               when ROUND =>
                   if prio = '0' then
-                    if DMNI_Receive = COPY_TO_MEM then
+                    if (DMNI_Receive = COPY_TO_MEM or DMNI_Receive = COPY_TO_MEM_DMA) then
                        ARB <= RECEIVE;
                        read_enable <= '1';                        
                     elsif send_active_2 = '1' then
@@ -155,7 +162,7 @@ begin
                     if send_active_2 = '1' then
                       ARB <= SEND;
                       write_enable <= '1';
-                    elsif DMNI_Receive = COPY_TO_MEM then
+                    elsif (DMNI_Receive = COPY_TO_MEM or DMNI_Receive = COPY_TO_MEM_DMA) then
                       ARB <= RECEIVE;
                       read_enable <= '1';
                     end if;
@@ -187,6 +194,12 @@ begin
   proc_receive : process (clock, reset)
   begin 
     if (reset = '1') then
+      reset_dmni_s <= '1';
+      payload_fix <= (others=>'0');  
+      sizedata_fix <= (others=>'0');
+      novo_pacote <= '0';
+      is_dmma <= '0';
+      
       first <= (others=> '0');
       last <= (others=> '0');
       payload_size <= (others=> '0');
@@ -205,7 +218,6 @@ begin
         bufferr(CONV_INTEGER(last)) <= data_in;
         add_buffer <= '1';
         last <= last + 1;
-
         --Read from NoC
         case( SR ) is           
            when HEADER =>
@@ -218,44 +230,91 @@ begin
            when PAYLOAD =>
              is_header(CONV_INTEGER(last)) <= '0';
              payload_size <= data_in - 1;
+             payload_fix <= data_in - 1;
+             sizedata_fix  <= data_in - 12;
              SR <= DATA;
            when DATA =>
+             novo_pacote <= '1';
              is_header(CONV_INTEGER(last)) <= '0';
              if(payload_size = 0) then
                 SR <= HEADER;
-             else 
+                novo_pacote <= '0';
+                is_dmma <= '0';
+             else  
                 payload_size <= payload_size - 1;
+
+                if (payload_size = payload_fix) then
+                   if (data_in = x"00000300") then --Service 300 start_cpu
+                     reset_dmni_s <= '0';
+                   end if;
+                end if;
+               if (payload_size = payload_fix) then
+                   if (data_in = x"00000290") then --Service 290 dmni_operation
+                     is_dmma <= '1';
+                   end if;
+               end if;              
              end if;
          end case ; 
-      end if; --(rx ='1' and slot_available = '1')
+      end if; --(rx ='1' and slot_available = '1') 
 
       --Write to memory
       case( DMNI_Receive ) is        
         when WAIT_state =>
-          if (start = '1' and operation = '1') then
-            recv_address <= address - WORD_SIZE;
-            recv_size <= size - 1;
+          if ((start = '1' and operation = '1') or novo_pacote = '1' ) then
+            --recv_address <= address - WORD_SIZE;
+            --recv_size <= size - 1;
+            recv_address <= (others=> '0');
+            recv_size <= payload_fix + 2; 
             if(is_header(CONV_INTEGER(first)) = '1' and intr_counter_temp > 0) then
               intr_counter_temp <= intr_counter_temp -1;
             end if;
             receive_active_2 <= '1';
-            DMNI_Receive <= COPY_TO_MEM;
+            if(is_dmma = '1') then
+              DMNI_Receive <= COPY_TO_MEM_DMA;
+            else
+              DMNI_Receive <= COPY_TO_MEM;
+            end if;
           end if;
 
         when COPY_TO_MEM =>
           if (read_enable = '1' and read_av = '1') then
-            mem_byte_we <= "1111";
-            mem_data_write <= bufferr(CONV_INTEGER(first));
+            --mem_byte_we <= "1111";
+            --mem_data_write <= bufferr(CONV_INTEGER(first));
+            --recv_address <= recv_address + WORD_SIZE;
+            recv_address <= (others=> '0');
+            mem_byte_we <= "0000";
+            mem_data_write <= (others=> '0');
             first <= first + 1;
             add_buffer <= '0';
-            recv_address <= recv_address + WORD_SIZE;
             recv_size <= recv_size -1;
             if (recv_size = 0) then
               DMNI_Receive <= FINISH;
-            end if ;
+            end if ; 
           else
             mem_byte_we <= "0000";
           end if;
+          
+        when COPY_TO_MEM_DMA =>
+          if (read_enable = '1' and read_av = '1') then   
+            if (recv_size <= sizedata_fix) then          
+              mem_byte_we <= "1111";
+              mem_data_write <= bufferr(CONV_INTEGER(first));
+              recv_address <= recv_address + WORD_SIZE; 
+            else
+              mem_byte_we <= "0000";
+              mem_data_write <= (others=> '0');
+              recv_address <= (others=> '0');
+            end if;
+            first <= first + 1; 
+            add_buffer <= '0';
+            recv_size <= recv_size -1;
+            if (recv_size = 0) then
+              DMNI_Receive <= FINISH;
+            end if ; 
+          else
+            mem_byte_we <= "0000";
+          end if;           
+          
 
         when FINISH =>
           receive_active_2 <= '0';
@@ -270,6 +329,7 @@ begin
 
   intr_count <= intr_counter_temp;
   intr <= '1' when intr_counter_temp > 0 else '0';
+  reset_dmni <= reset_dmni_s;
 
   proc_send : process (clock, reset)
   begin 

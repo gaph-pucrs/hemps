@@ -1,16 +1,17 @@
 #include <api.h>
 #include <stdlib.h>
-
-char message[] = "Hello World\n";
-
+Message msg;
 int main(){
-	int i;
-	
+	int i, j,t;
 	Echo("task A started.");
 	Echo(itoa(GetTick()));
-	for(i=0;i<500;i++){
-		Transmit(ROUTER_ADDR(0, 0)|MANUAL_WEST, message, 3);
+	for(i=0;i<1;i++)
+	{
+		msg.length = 30;
+		for(j=0;j<30;j++) msg.msg[j]=i;
+		Send(&msg,taskB);
 	}
+
 	Echo(itoa(GetTick()));
 	Echo("task A finished.");
 	exit();

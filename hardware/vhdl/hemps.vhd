@@ -19,7 +19,7 @@ use ieee.std_logic_unsigned.all;
 use work.standards.all;
 use work.hemps_pkg.all;
 
-entity HeMPS is
+entity HeMPS is                         -- Interface com o ambiente exterior
   port(
     clock : in std_logic;
     reset : in std_logic;
@@ -38,12 +38,12 @@ entity HeMPS is
     );
 end;
 
-architecture HeMPS of HeMPS is
+architecture HeMPS of HeMPS is          --Relacao entre as portas
 
   -- Interconnection signals 
-  type txNport is array (NUMBER_PROCESSORS-1 downto 0) of std_logic_vector(3 downto 0);
+  type txNport is array (NUMBER_PROCESSORS - 1 downto 0) of std_logic_vector(3 downto 0);
   signal tx             : txNPORT;
-  type rxNport is array (NUMBER_PROCESSORS-1 downto 0) of std_logic_vector(3 downto 0);
+  type rxNport is array (NUMBER_PROCESSORS - 1 downto 0) of std_logic_vector(3 downto 0);
   signal rx             : rxNPORT;
   type clock_rxNport is array (NUMBER_PROCESSORS - 1 downto 0) of std_logic_vector(3 downto 0);
   signal clock_rx       : clock_rxNPORT;
@@ -74,7 +74,7 @@ begin
   end generate core_type_gen;
 
 
-  proc : for i in 0 to NUMBER_PROCESSORS-1 generate
+  proc : for i in 0 to NUMBER_PROCESSORS-1 generate  --Gera uma matriz de processadores homeogenios 
 
     PE : entity work.pe
       generic map (
@@ -112,19 +112,39 @@ begin
     ------------------------------------------------------------------------------
     --- REPOSITORY CONNECTIONS ----------------------------------------------------
     ------------------------------------------------------------------------------
-    repo_mas : if pe_type(i) = "mas" generate
+    repo_mas : if pe_type(i) = "mas" generate  -- Caso o PE for mestre
       repo_address     <= repo_address_sig(i);
       repo_data_sig(i) <= repo_data;
       ack_app          <= ack_app_sig(i);
       req_app_sig(i)   <= req_app;
     end generate;
 
-    ground_repo : if pe_type(i) /= "mas" generate
+    ground_repo : if pe_type(i) /= "mas" generate  --Caso o PE nao for mestre
       repo_address_sig(i) <= (others => '0');
       repo_data_sig(i)    <= (others => '0');
       ack_app_sig(i)      <= '0';
       req_app_sig(i)      <= (others => '0');
     end generate;
+
+
+
+
+
+    -- Returns the router position in the mesh
+    -- BR: Botton Right
+    -- BL: Botton Left
+    -- TR: Top Right
+    -- TL: Top Left 
+    -- CRX: Center Right 
+    -- CL: Center Left
+    -- CC: Center
+    -- 4x4 positions exemple
+    --              TL TC TC TR
+    --              CL CC CC CRX 
+    --              CL CC CC CRX 
+    --              BL BC BC BR
+
+
 
     ------------------------------------------------------------------------------
     --- EAST PORT CONNECTIONS ----------------------------------------------------
@@ -143,11 +163,11 @@ begin
       data_consumer : entity work.receive_data
         generic map(router_nb => i,
                     port_name => "EAST")
-        port map(clock     => clock,
-                 reset     => reset,
-                 clock_tx  => clock_tx(i)(EAST),
-                 tx        => tx(i)(EAST),
-                 data_out  => data_out(i)(EAST),
+        port map(clock    => clock,
+                 reset    => reset,
+                 clock_tx => clock_tx(i)(EAST),
+                 tx       => tx(i)(EAST),
+                 data_out => data_out(i)(EAST),
                  credit_i => credit_i(i)(EAST));
     end generate;
 
@@ -175,11 +195,11 @@ begin
       data_consumer : entity work.receive_data
         generic map(router_nb => i,
                     port_name => "WEST")
-        port map(clock     => clock,
-                 reset     => reset,
-                 clock_tx  => clock_tx(i)(WEST),
-                 tx        => tx(i)(WEST),
-                 data_out  => data_out(i)(WEST),
+        port map(clock    => clock,
+                 reset    => reset,
+                 clock_tx => clock_tx(i)(WEST),
+                 tx       => tx(i)(WEST),
+                 data_out => data_out(i)(WEST),
                  credit_i => credit_i(i)(WEST));
     end generate;
 
@@ -207,11 +227,11 @@ begin
       data_consumer : entity work.receive_data
         generic map(router_nb => i,
                     port_name => "NORTH")
-        port map(clock     => clock,
-                 reset     => reset,
-                 clock_tx  => clock_tx(i)(NORTH),
-                 tx        => tx(i)(NORTH),
-                 data_out  => data_out(i)(NORTH),
+        port map(clock    => clock,
+                 reset    => reset,
+                 clock_tx => clock_tx(i)(NORTH),
+                 tx       => tx(i)(NORTH),
+                 data_out => data_out(i)(NORTH),
                  credit_i => credit_i(i)(NORTH));
     end generate;
 
@@ -239,11 +259,11 @@ begin
       data_consumer : entity work.receive_data
         generic map(router_nb => i,
                     port_name => "SOUTH")
-        port map(clock     => clock,
-                 reset     => reset,
-                 clock_tx  => clock_tx(i)(SOUTH),
-                 tx        => tx(i)(SOUTH),
-                 data_out  => data_out(i)(SOUTH),
+        port map(clock    => clock,
+                 reset    => reset,
+                 clock_tx => clock_tx(i)(SOUTH),
+                 tx       => tx(i)(SOUTH),
+                 data_out => data_out(i)(SOUTH),
                  credit_i => credit_i(i)(SOUTH));
     end generate;
 

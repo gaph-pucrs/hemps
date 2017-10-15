@@ -93,7 +93,7 @@ package standards is
 ---------------------------------------------------------
 -- CONSTANT DEPENDENTE DA LARGURA DE BANDA DA REDE - FIXED FOR HEMPS
 ---------------------------------------------------------
-  constant TAM_FLIT   : integer range 1 to 64 := 32;
+  constant TAM_FLIT   : integer range 1 to 64 := 32;  -- Flit tem faixa de 1 ate 64 e eh atribuido 32
   constant METADEFLIT : integer range 1 to 32 := (TAM_FLIT/2);
   constant QUARTOFLIT : integer range 1 to 16 := (TAM_FLIT/4);
 

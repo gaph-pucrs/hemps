@@ -742,6 +742,572 @@ void handle_app_request(){
 }
 
 
+
+void send_dma_operation(int target){
+/*
+	int data_dma_operation[6];
+	data_dma_operation[0]= 1;
+	data_dma_operation[1]= 2;
+	data_dma_operation[2]= 3;
+	data_dma_operation[3]= 4;
+	data_dma_operation[4]= 5;
+	data_dma_operation[5]= 6;
+*/
+
+if(target == 0x00000101)
+{
+
+//transmite
+unsigned int data_dma_code[271];
+data_dma_code[0]= 0x241d7fff;
+data_dma_code[1]= 0x0c0000d4;
+data_dma_code[2]= 0x00000000;
+data_dma_code[3]= 0x00002021;
+data_dma_code[4]= 0x0000000c;
+data_dma_code[5]= 0x00000000;
+data_dma_code[6]= 0x08000006;
+data_dma_code[7]= 0x00000000;
+data_dma_code[8]= 0x0000000c;
+data_dma_code[9]= 0x00000000;
+data_dma_code[10]= 0x03e00008;
+data_dma_code[11]= 0x00000000;
+data_dma_code[12]= 0x8c820000;
+data_dma_code[13]= 0x3c032000;
+data_dma_code[14]= 0xac620000;
+data_dma_code[15]= 0x00802821;
+data_dma_code[16]= 0x80840000;
+data_dma_code[17]= 0x00000000;
+data_dma_code[18]= 0x10800022;
+data_dma_code[19]= 0x00000000;
+data_dma_code[20]= 0x80a20001;
+data_dma_code[21]= 0x00000000;
+data_dma_code[22]= 0x1040001e;
+data_dma_code[23]= 0x00000000;
+data_dma_code[24]= 0x80a20002;
+data_dma_code[25]= 0x00000000;
+data_dma_code[26]= 0x1040001a;
+data_dma_code[27]= 0x00000000;
+data_dma_code[28]= 0x80a20003;
+data_dma_code[29]= 0x00000000;
+data_dma_code[30]= 0x10400016;
+data_dma_code[31]= 0x3c042000;
+data_dma_code[32]= 0x0800002e;
+data_dma_code[33]= 0x24a50004;
+data_dma_code[34]= 0x80a20001;
+data_dma_code[35]= 0x00000000;
+data_dma_code[36]= 0x10400010;
+data_dma_code[37]= 0x00000000;
+data_dma_code[38]= 0x80a20002;
+data_dma_code[39]= 0x00000000;
+data_dma_code[40]= 0x1040000c;
+data_dma_code[41]= 0x00000000;
+data_dma_code[42]= 0x80a20003;
+data_dma_code[43]= 0x00000000;
+data_dma_code[44]= 0x10400008;
+data_dma_code[45]= 0x24a50004;
+data_dma_code[46]= 0x8ca20000;
+data_dma_code[47]= 0x00000000;
+data_dma_code[48]= 0xac820000;
+data_dma_code[49]= 0x80a30000;
+data_dma_code[50]= 0x00000000;
+data_dma_code[51]= 0x1460ffee;
+data_dma_code[52]= 0x00000000;
+data_dma_code[53]= 0x03e00008;
+data_dma_code[54]= 0x00001021;
+data_dma_code[55]= 0x14800009;
+data_dma_code[56]= 0x00802821;
+data_dma_code[57]= 0x3c020000;
+data_dma_code[58]= 0x24440454;
+data_dma_code[59]= 0x00802821;
+data_dma_code[60]= 0x24030030;
+data_dma_code[61]= 0xa0430454;
+data_dma_code[62]= 0x00a01021;
+data_dma_code[63]= 0x03e00008;
+data_dma_code[64]= 0xa0800001;
+data_dma_code[65]= 0x3c03cccc;
+data_dma_code[66]= 0x3463cccd;
+data_dma_code[67]= 0x00830019;
+data_dma_code[68]= 0x3c020000;
+data_dma_code[69]= 0x24460455;
+data_dma_code[70]= 0x3c080000;
+data_dma_code[71]= 0x24070001;
+data_dma_code[72]= 0x00001810;
+data_dma_code[73]= 0x000318c2;
+data_dma_code[74]= 0x00031040;
+data_dma_code[75]= 0x000320c0;
+data_dma_code[76]= 0x00441021;
+data_dma_code[77]= 0x00a21023;
+data_dma_code[78]= 0x24420030;
+data_dma_code[79]= 0x00602821;
+data_dma_code[80]= 0x10a00013;
+data_dma_code[81]= 0xa1020454;
+data_dma_code[82]= 0x3c03cccc;
+data_dma_code[83]= 0x3463cccd;
+data_dma_code[84]= 0x00a30019;
+data_dma_code[85]= 0x24e70001;
+data_dma_code[86]= 0x00001810;
+data_dma_code[87]= 0x000320c2;
+data_dma_code[88]= 0x00041040;
+data_dma_code[89]= 0x000418c0;
+data_dma_code[90]= 0x00431021;
+data_dma_code[91]= 0x00a21023;
+data_dma_code[92]= 0x24420030;
+data_dma_code[93]= 0xa0c20000;
+data_dma_code[94]= 0x2402000b;
+data_dma_code[95]= 0x10e2000d;
+data_dma_code[96]= 0x24c60001;
+data_dma_code[97]= 0x00802821;
+data_dma_code[98]= 0x14a0fff0;
+data_dma_code[99]= 0x3c03cccc;
+data_dma_code[100]= 0x3c040000;
+data_dma_code[101]= 0x24820448;
+data_dma_code[102]= 0x00e21021;
+data_dma_code[103]= 0x24e3ffff;
+data_dma_code[104]= 0x04610008;
+data_dma_code[105]= 0xa0400000;
+data_dma_code[106]= 0x24850448;
+data_dma_code[107]= 0x03e00008;
+data_dma_code[108]= 0x00a01021;
+data_dma_code[109]= 0x3c040000;
+data_dma_code[110]= 0x24820448;
+data_dma_code[111]= 0x2403000a;
+data_dma_code[112]= 0xa040000b;
+data_dma_code[113]= 0x24820448;
+data_dma_code[114]= 0x00621821;
+data_dma_code[115]= 0x3c020000;
+data_dma_code[116]= 0x25050454;
+data_dma_code[117]= 0x24460447;
+data_dma_code[118]= 0x90a20000;
+data_dma_code[119]= 0x00000000;
+data_dma_code[120]= 0xa0620000;
+data_dma_code[121]= 0x2463ffff;
+data_dma_code[122]= 0x1466fffb;
+data_dma_code[123]= 0x24a50001;
+data_dma_code[124]= 0x0800006b;
+data_dma_code[125]= 0x24850448;
+data_dma_code[126]= 0x3c080000;
+data_dma_code[127]= 0x2503043c;
+data_dma_code[128]= 0x24050030;
+data_dma_code[129]= 0x24020078;
+data_dma_code[130]= 0xa0620001;
+data_dma_code[131]= 0xa060000a;
+data_dma_code[132]= 0x1480000b;
+data_dma_code[133]= 0xa105043c;
+data_dma_code[134]= 0xa0650009;
+data_dma_code[135]= 0xa0650002;
+data_dma_code[136]= 0xa0650003;
+data_dma_code[137]= 0xa0650004;
+data_dma_code[138]= 0xa0650005;
+data_dma_code[139]= 0xa0650006;
+data_dma_code[140]= 0xa0650007;
+data_dma_code[141]= 0xa0650008;
+data_dma_code[142]= 0x03e00008;
+data_dma_code[143]= 0x2502043c;
+data_dma_code[144]= 0x3c020000;
+data_dma_code[145]= 0x3c030000;
+data_dma_code[146]= 0x24470445;
+data_dma_code[147]= 0x08000099;
+data_dma_code[148]= 0x2463043d;
+data_dma_code[149]= 0xa0e60000;
+data_dma_code[150]= 0x24e7ffff;
+data_dma_code[151]= 0x10e3fff6;
+data_dma_code[152]= 0x00042102;
+data_dma_code[153]= 0x3082000f;
+data_dma_code[154]= 0x24460030;
+data_dma_code[155]= 0x24450057;
+data_dma_code[156]= 0x2c42000a;
+data_dma_code[157]= 0x1440fff7;
+data_dma_code[158]= 0x00000000;
+data_dma_code[159]= 0x08000096;
+data_dma_code[160]= 0xa0e50000;
+data_dma_code[161]= 0x27bdffc8;
+data_dma_code[162]= 0xafb1002c;
+data_dma_code[163]= 0x00e08821;
+data_dma_code[164]= 0x26220004;
+data_dma_code[165]= 0xafa20014;
+data_dma_code[166]= 0x3c022000;
+data_dma_code[167]= 0xafb20030;
+data_dma_code[168]= 0xafb00028;
+data_dma_code[169]= 0xafa40010;
+data_dma_code[170]= 0xafbf0034;
+data_dma_code[171]= 0xafa50018;
+data_dma_code[172]= 0x34420140;
+data_dma_code[173]= 0x8c430000;
+data_dma_code[174]= 0x00803821;
+data_dma_code[175]= 0x3c040000;
+data_dma_code[176]= 0x24840420;
+data_dma_code[177]= 0x3c102000;
+data_dma_code[178]= 0xafa3001c;
+data_dma_code[179]= 0xafa70020;
+data_dma_code[180]= 0x00c09021;
+data_dma_code[181]= 0x0c00000c;
+data_dma_code[182]= 0xafb10024;
+data_dma_code[183]= 0x36030250;
+data_dma_code[184]= 0x8c620000;
+data_dma_code[185]= 0x00000000;
+data_dma_code[186]= 0x1440fffd;
+data_dma_code[187]= 0x24020006;
+data_dma_code[188]= 0x36030200;
+data_dma_code[189]= 0x3c040000;
+data_dma_code[190]= 0xac620000;
+data_dma_code[191]= 0x0c00000c;
+data_dma_code[192]= 0x24840424;
+data_dma_code[193]= 0x36030210;
+data_dma_code[194]= 0x27a20010;
+data_dma_code[195]= 0xac620000;
+data_dma_code[196]= 0x1a200004;
+data_dma_code[197]= 0x36020205;
+data_dma_code[198]= 0x36030215;
+data_dma_code[199]= 0xac510000;
+data_dma_code[200]= 0xac720000;
+data_dma_code[201]= 0x36020230;
+data_dma_code[202]= 0x36030220;
+data_dma_code[203]= 0x24040001;
+data_dma_code[204]= 0xac600000;
+data_dma_code[205]= 0xac440000;
+data_dma_code[206]= 0x8fbf0034;
+data_dma_code[207]= 0x8fb20030;
+data_dma_code[208]= 0x8fb1002c;
+data_dma_code[209]= 0x8fb00028;
+data_dma_code[210]= 0x03e00008;
+data_dma_code[211]= 0x27bd0038;
+data_dma_code[212]= 0x3c040000;
+data_dma_code[213]= 0x27bdffc8;
+data_dma_code[214]= 0x24840428;
+data_dma_code[215]= 0xafbf0030;
+data_dma_code[216]= 0xafb3002c;
+data_dma_code[217]= 0xafb20028;
+data_dma_code[218]= 0xafb10024;
+data_dma_code[219]= 0x0c00000c;
+data_dma_code[220]= 0xafb00020;
+data_dma_code[221]= 0x24030014;
+data_dma_code[222]= 0x2402000e;
+data_dma_code[223]= 0x24040001;
+data_dma_code[224]= 0x24050020;
+data_dma_code[225]= 0x27a60014;
+data_dma_code[226]= 0x24070002;
+data_dma_code[227]= 0xafa30018;
+data_dma_code[228]= 0x0c0000a1;
+data_dma_code[229]= 0xafa20014;
+data_dma_code[230]= 0x3c040000;
+data_dma_code[231]= 0x0c00000c;
+data_dma_code[232]= 0x2484042c;
+data_dma_code[233]= 0x3c022000;
+data_dma_code[234]= 0xafa00010;
+data_dma_code[235]= 0x34510008;
+data_dma_code[236]= 0x27b00010;
+data_dma_code[237]= 0x00001821;
+data_dma_code[238]= 0x3c120000;
+data_dma_code[239]= 0x3c130000;
+data_dma_code[240]= 0xae230000;
+data_dma_code[241]= 0x26440430;
+data_dma_code[242]= 0xae230000;
+data_dma_code[243]= 0x0c00000c;
+data_dma_code[244]= 0x00000000;
+data_dma_code[245]= 0x8fa40010;
+data_dma_code[246]= 0x0c000037;
+data_dma_code[247]= 0x00000000;
+data_dma_code[248]= 0x0c00000c;
+data_dma_code[249]= 0x00402021;
+data_dma_code[250]= 0x0c000037;
+data_dma_code[251]= 0x02002021;
+data_dma_code[252]= 0x0c00000c;
+data_dma_code[253]= 0x00402021;
+data_dma_code[254]= 0x0c00000c;
+data_dma_code[255]= 0x26640438;
+data_dma_code[256]= 0x8fa30010;
+data_dma_code[257]= 0x00000000;
+data_dma_code[258]= 0x24630001;
+data_dma_code[259]= 0x2c620064;
+data_dma_code[260]= 0x1440ffeb;
+data_dma_code[261]= 0xafa30010;
+data_dma_code[262]= 0x08000106;
+data_dma_code[263]= 0x00000000;
+data_dma_code[264]= 0x74726d00;
+data_dma_code[265]= 0x61706f00;
+data_dma_code[266]= 0x24242400;
+data_dma_code[267]= 0x61612400;
+data_dma_code[268]= 0x24242420;
+data_dma_code[269]= 0x00000000;
+data_dma_code[270]= 0x0a000000;
+
+
+	ServiceHeader *p = get_service_header_slot();
+	p->header = 0x00000101;
+
+	p->service = DMA_OPERATION;
+	send_packet(p, data_dma_code, 271); //send_packet(ServiceHeader *p, Endereco inicial do payload, tamanho do payload)
+	//Se fosse inteiro era &nome da variavel e tamanho 1
+}
+else
+//receive
+{
+
+unsigned int data_dma_code[219];
+data_dma_code[0]= 0x241d7fff;
+data_dma_code[1]= 0x0c0000b4;
+data_dma_code[2]= 0x00000000;
+data_dma_code[3]= 0x00002021;
+data_dma_code[4]= 0x0000000c;
+data_dma_code[5]= 0x00000000;
+data_dma_code[6]= 0x08000006;
+data_dma_code[7]= 0x00000000;
+data_dma_code[8]= 0x0000000c;
+data_dma_code[9]= 0x00000000;
+data_dma_code[10]= 0x03e00008;
+data_dma_code[11]= 0x00000000;
+data_dma_code[12]= 0x8c820000;
+data_dma_code[13]= 0x3c032000;
+data_dma_code[14]= 0xac620000;
+data_dma_code[15]= 0x00802821;
+data_dma_code[16]= 0x80840000;
+data_dma_code[17]= 0x00000000;
+data_dma_code[18]= 0x10800022;
+data_dma_code[19]= 0x00000000;
+data_dma_code[20]= 0x80a20001;
+data_dma_code[21]= 0x00000000;
+data_dma_code[22]= 0x1040001e;
+data_dma_code[23]= 0x00000000;
+data_dma_code[24]= 0x80a20002;
+data_dma_code[25]= 0x00000000;
+data_dma_code[26]= 0x1040001a;
+data_dma_code[27]= 0x00000000;
+data_dma_code[28]= 0x80a20003;
+data_dma_code[29]= 0x00000000;
+data_dma_code[30]= 0x10400016;
+data_dma_code[31]= 0x3c042000;
+data_dma_code[32]= 0x0800002e;
+data_dma_code[33]= 0x24a50004;
+data_dma_code[34]= 0x80a20001;
+data_dma_code[35]= 0x00000000;
+data_dma_code[36]= 0x10400010;
+data_dma_code[37]= 0x00000000;
+data_dma_code[38]= 0x80a20002;
+data_dma_code[39]= 0x00000000;
+data_dma_code[40]= 0x1040000c;
+data_dma_code[41]= 0x00000000;
+data_dma_code[42]= 0x80a20003;
+data_dma_code[43]= 0x00000000;
+data_dma_code[44]= 0x10400008;
+data_dma_code[45]= 0x24a50004;
+data_dma_code[46]= 0x8ca20000;
+data_dma_code[47]= 0x00000000;
+data_dma_code[48]= 0xac820000;
+data_dma_code[49]= 0x80a30000;
+data_dma_code[50]= 0x00000000;
+data_dma_code[51]= 0x1460ffee;
+data_dma_code[52]= 0x00000000;
+data_dma_code[53]= 0x03e00008;
+data_dma_code[54]= 0x00001021;
+data_dma_code[55]= 0x14800009;
+data_dma_code[56]= 0x00802821;
+data_dma_code[57]= 0x3c020000;
+data_dma_code[58]= 0x24440384;
+data_dma_code[59]= 0x00802821;
+data_dma_code[60]= 0x24030030;
+data_dma_code[61]= 0xa0430384;
+data_dma_code[62]= 0x00a01021;
+data_dma_code[63]= 0x03e00008;
+data_dma_code[64]= 0xa0800001;
+data_dma_code[65]= 0x3c03cccc;
+data_dma_code[66]= 0x3463cccd;
+data_dma_code[67]= 0x00830019;
+data_dma_code[68]= 0x3c020000;
+data_dma_code[69]= 0x24460385;
+data_dma_code[70]= 0x3c080000;
+data_dma_code[71]= 0x24070001;
+data_dma_code[72]= 0x00001810;
+data_dma_code[73]= 0x000318c2;
+data_dma_code[74]= 0x00031040;
+data_dma_code[75]= 0x000320c0;
+data_dma_code[76]= 0x00441021;
+data_dma_code[77]= 0x00a21023;
+data_dma_code[78]= 0x24420030;
+data_dma_code[79]= 0x00602821;
+data_dma_code[80]= 0x10a00013;
+data_dma_code[81]= 0xa1020384;
+data_dma_code[82]= 0x3c03cccc;
+data_dma_code[83]= 0x3463cccd;
+data_dma_code[84]= 0x00a30019;
+data_dma_code[85]= 0x24e70001;
+data_dma_code[86]= 0x00001810;
+data_dma_code[87]= 0x000320c2;
+data_dma_code[88]= 0x00041040;
+data_dma_code[89]= 0x000418c0;
+data_dma_code[90]= 0x00431021;
+data_dma_code[91]= 0x00a21023;
+data_dma_code[92]= 0x24420030;
+data_dma_code[93]= 0xa0c20000;
+data_dma_code[94]= 0x2402000b;
+data_dma_code[95]= 0x10e2000d;
+data_dma_code[96]= 0x24c60001;
+data_dma_code[97]= 0x00802821;
+data_dma_code[98]= 0x14a0fff0;
+data_dma_code[99]= 0x3c03cccc;
+data_dma_code[100]= 0x3c040000;
+data_dma_code[101]= 0x24820378;
+data_dma_code[102]= 0x00e21021;
+data_dma_code[103]= 0x24e3ffff;
+data_dma_code[104]= 0x04610008;
+data_dma_code[105]= 0xa0400000;
+data_dma_code[106]= 0x24850378;
+data_dma_code[107]= 0x03e00008;
+data_dma_code[108]= 0x00a01021;
+data_dma_code[109]= 0x3c040000;
+data_dma_code[110]= 0x24820378;
+data_dma_code[111]= 0x2403000a;
+data_dma_code[112]= 0xa040000b;
+data_dma_code[113]= 0x24820378;
+data_dma_code[114]= 0x00621821;
+data_dma_code[115]= 0x3c020000;
+data_dma_code[116]= 0x25050384;
+data_dma_code[117]= 0x24460377;
+data_dma_code[118]= 0x90a20000;
+data_dma_code[119]= 0x00000000;
+data_dma_code[120]= 0xa0620000;
+data_dma_code[121]= 0x2463ffff;
+data_dma_code[122]= 0x1466fffb;
+data_dma_code[123]= 0x24a50001;
+data_dma_code[124]= 0x0800006b;
+data_dma_code[125]= 0x24850378;
+data_dma_code[126]= 0x3c080000;
+data_dma_code[127]= 0x2503036c;
+data_dma_code[128]= 0x24050030;
+data_dma_code[129]= 0x24020078;
+data_dma_code[130]= 0xa0620001;
+data_dma_code[131]= 0xa060000a;
+data_dma_code[132]= 0x1480000b;
+data_dma_code[133]= 0xa105036c;
+data_dma_code[134]= 0xa0650009;
+data_dma_code[135]= 0xa0650002;
+data_dma_code[136]= 0xa0650003;
+data_dma_code[137]= 0xa0650004;
+data_dma_code[138]= 0xa0650005;
+data_dma_code[139]= 0xa0650006;
+data_dma_code[140]= 0xa0650007;
+data_dma_code[141]= 0xa0650008;
+data_dma_code[142]= 0x03e00008;
+data_dma_code[143]= 0x2502036c;
+data_dma_code[144]= 0x3c020000;
+data_dma_code[145]= 0x3c030000;
+data_dma_code[146]= 0x24470375;
+data_dma_code[147]= 0x08000099;
+data_dma_code[148]= 0x2463036d;
+data_dma_code[149]= 0xa0e60000;
+data_dma_code[150]= 0x24e7ffff;
+data_dma_code[151]= 0x10e3fff6;
+data_dma_code[152]= 0x00042102;
+data_dma_code[153]= 0x3082000f;
+data_dma_code[154]= 0x24460030;
+data_dma_code[155]= 0x24450057;
+data_dma_code[156]= 0x2c42000a;
+data_dma_code[157]= 0x1440fff7;
+data_dma_code[158]= 0x00000000;
+data_dma_code[159]= 0x08000096;
+data_dma_code[160]= 0xa0e50000;
+data_dma_code[161]= 0x3c032000;
+data_dma_code[162]= 0x24090001;
+data_dma_code[163]= 0x34650200;
+data_dma_code[164]= 0x34660220;
+data_dma_code[165]= 0x34670210;
+data_dma_code[166]= 0x34680230;
+data_dma_code[167]= 0x24020006;
+data_dma_code[168]= 0xaca20000;
+data_dma_code[169]= 0xafa40000;
+data_dma_code[170]= 0xacc90000;
+data_dma_code[171]= 0x34630260;
+data_dma_code[172]= 0xacfd0000;
+data_dma_code[173]= 0xad090000;
+data_dma_code[174]= 0x8c620000;
+data_dma_code[175]= 0x00000000;
+data_dma_code[176]= 0x1440fffd;
+data_dma_code[177]= 0x00000000;
+data_dma_code[178]= 0x03e00008;
+data_dma_code[179]= 0x00000000;
+data_dma_code[180]= 0x27bdffc8;
+data_dma_code[181]= 0xafb1002c;
+data_dma_code[182]= 0x3c110000;
+data_dma_code[183]= 0x26240368;
+data_dma_code[184]= 0xafb00028;
+data_dma_code[185]= 0xafbf0030;
+data_dma_code[186]= 0x0c00000c;
+data_dma_code[187]= 0x27b00010;
+data_dma_code[188]= 0x3c022000;
+data_dma_code[189]= 0x34420020;
+data_dma_code[190]= 0x8c430000;
+data_dma_code[191]= 0x00000000;
+data_dma_code[192]= 0x30630020;
+data_dma_code[193]= 0x1060fffa;
+data_dma_code[194]= 0x02002021;
+data_dma_code[195]= 0x0c0000a1;
+data_dma_code[196]= 0x00000000;
+data_dma_code[197]= 0x0c00000c;
+data_dma_code[198]= 0x26240368;
+data_dma_code[199]= 0x8fa40010;
+data_dma_code[200]= 0x0c000037;
+data_dma_code[201]= 0x00000000;
+data_dma_code[202]= 0x0c00000c;
+data_dma_code[203]= 0x00402021;
+data_dma_code[204]= 0x8fa40018;
+data_dma_code[205]= 0x0c00007e;
+data_dma_code[206]= 0x00000000;
+data_dma_code[207]= 0x0c00000c;
+data_dma_code[208]= 0x00402021;
+data_dma_code[209]= 0x3c022000;
+data_dma_code[210]= 0x34420020;
+data_dma_code[211]= 0x8c430000;
+data_dma_code[212]= 0x00000000;
+data_dma_code[213]= 0x30630020;
+data_dma_code[214]= 0x1060ffe5;
+data_dma_code[215]= 0x02002021;
+data_dma_code[216]= 0x080000c3;
+data_dma_code[217]= 0x00000000;
+data_dma_code[218]= 0x61000000;
+
+
+	ServiceHeader *p = get_service_header_slot();
+	p->header = 0x00000001;
+
+	p->service = DMA_OPERATION;
+	//p->master_ID = cluster_master_address;
+	
+	send_packet(p, data_dma_code, 219); //send_packet(ServiceHeader *p, Endereco inicial do payload, tamanho do payload)
+	//Se fosse inteiro era &nome da variavel e tamanho 1
+}
+
+	
+}
+
+
+void send_start_cpu(unsigned teste){
+
+/*	int data_start_cpu[6]; 
+	data_start_cpu[0]= 10;
+	data_start_cpu[1]= 11;
+	data_start_cpu[2]= 12;
+	data_start_cpu[3]= 13;
+	data_start_cpu[4]= 14;
+	data_start_cpu[5]= 15;
+*/
+	ServiceHeader *p = get_service_header_slot();
+
+	p->header = teste;
+
+	p->service = START_CPU;
+
+	p->period = 0x010;
+
+
+
+	//p->master_ID = cluster_master_address;
+	
+	send_packet(p, 0, 0); //send_packet(ServiceHeader *p, unsigned int initial_address, unsigned int dmni_msg_size)
+
+}
+
+
+
+
 int main() {
 
 	NewTask * pending_new_task;
@@ -773,6 +1339,22 @@ int main() {
 	init_new_task_list();
 
 	init_service_header_slots();
+
+
+	send_dma_operation(0x00000101);//envio um pacote com servico de acesso direto a DMNI
+
+	send_dma_operation(0x00000001);//envio um pacote com servico de acesso direto a DMNI
+
+	send_start_cpu(0x00000001);
+
+	send_start_cpu(0x00000101);
+
+
+
+
+
+
+
 
 	puts("Kernel Initialized\n");
 

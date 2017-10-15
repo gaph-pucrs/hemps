@@ -45,5 +45,7 @@
 #define 	DEADLINE_MISS_REPORT			0x00000270
 #define 	REAL_TIME_CHANGE				0x00000280
 #define 	BORDER_ROUTE					0x00000310
+#define 	DMA_OPERATION  				    0x00000290
+#define 	START_CPU         			    0x00000300
 
 #endif

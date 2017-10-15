@@ -6,7 +6,7 @@ int main()
 	int i;
 	Echo("task B started.");
 	Echo(itoa(GetTick()));
-	for(i=0;i<30;i++)
+	for(i=0;i<1;i++)
 	{
 		Receive(&msg,taskA);
 	}
