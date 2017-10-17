@@ -23,105 +23,106 @@ use work.hemps_pkg.all;
 use work.standards.all;
 
 entity dmni is
-    generic(address_router: regmetadeflit := (others=>'0'));
-    port
-    (  
-        clock          : in  std_logic;
-        reset          : in  std_logic;
-        -- Configuration interface
-        set_address    : in  std_logic;
-        set_address_2  : in  std_logic;
-        set_size       : in  std_logic;      
-        set_size_2     : in  std_logic;
-        set_op         : in  std_logic;
-        start          : in  std_logic;
-        config_data    : in  std_logic_vector(31 downto 0);
-        -- Status outputs
-        intr            : out  std_logic;
-        send_active     : out  std_logic;
-        receive_active  : out  std_logic;
-        reset_dmni      : out  std_logic;
-        -- Memory interface
-        mem_address    : out std_logic_vector(31 downto 0);
-        mem_data_write : out std_logic_vector(31 downto 0);
-        mem_data_read  : in  std_logic_vector(31 downto 0);
-        mem_byte_we    : out std_logic_vector(3 downto 0);
-        -- Noc Interface (Local port)
-        tx              : out  std_logic;
-        data_out        : out  regflit;
-        credit_i        : in   std_logic;
-        clock_tx        : out  std_logic;
-        rx              : in   std_logic;
-        data_in         : in   regflit;
-        credit_o        : out  std_logic;
-        clock_rx        : in   std_logic
-    );  
+  generic(address_router : regmetadeflit := (others => '0'));
+  port
+    (
+      clock          : in  std_logic;
+      reset          : in  std_logic;
+      -- Configuration interface
+      set_address    : in  std_logic;
+      set_address_2  : in  std_logic;
+      set_size       : in  std_logic;
+      set_size_2     : in  std_logic;
+      set_op         : in  std_logic;
+      start          : in  std_logic;
+      config_data    : in  std_logic_vector(31 downto 0);
+      -- Status outputs
+      intr           : out std_logic;
+      send_active    : out std_logic;
+      receive_active : out std_logic;
+      reset_dmni     : out std_logic;
+      -- Memory interface
+      mem_address    : out std_logic_vector(31 downto 0);
+      mem_data_write : out std_logic_vector(31 downto 0);
+      mem_data_read  : in  std_logic_vector(31 downto 0);
+      mem_byte_we    : out std_logic_vector(3 downto 0);
+      -- Noc Interface (Local port)
+      tx             : out std_logic;
+      data_out       : out regflit;
+      credit_i       : in  std_logic;
+      clock_tx       : out std_logic;
+      rx             : in  std_logic;
+      data_in        : in  regflit;
+      credit_o       : out std_logic;
+      clock_rx       : in  std_logic
+      );
 end;
 
 architecture dmni of dmni is
 
-   constant DMNI_TIMER: std_logic_vector(4 downto 0):="10000";
-   constant WORD_SIZE: std_logic_vector(4 downto 0):="00100";
-   
-   type dmni_state is (WAIT_state, LOAD, COPY_FROM_MEM, COPY_TO_MEM, COPY_TO_MEM_DMA, FINISH);
-   signal DMNI_Send: dmni_state;
-   signal DMNI_Receive: dmni_state;
-   
-   type noc_state is (HEADER, PAYLOAD, DATA);
-   signal SR: noc_state;
-   
-   type arbiter_state is (ROUND, SEND, RECEIVE);
-   signal ARB: arbiter_state;
-   
-   signal bufferr: buff_dmni := (others=>(others=>'0'));
-   subtype buffsizebool is std_logic_vector(0 to (TAM_BUFFER_DMNI-1)); 
-   signal is_header: buffsizebool := (others=> '0');
-   signal intr_count      : std_logic_vector(3 downto 0);
+  constant DMNI_TIMER : std_logic_vector(4 downto 0) := "10000";
+  constant WORD_SIZE  : std_logic_vector(4 downto 0) := "00100";
 
-   signal first,last: pointer := (others=>'0');
-   signal add_buffer      : std_logic;
+  type dmni_state is (WAIT_state, LOAD, COPY_FROM_MEM, COPY_TO_MEM, COPY_TO_MEM_DMA, DISCARD, FINISH);
+  type operation_type is (LEGACY, DMMA, START_CPU);
+  signal DMNI_Send    : dmni_state;
+  signal DMNI_Receive : dmni_state;
 
-   signal payload_size      : regflit;
+  type noc_state is (HEADER, PAYLOAD, DATA);
+  signal SR : noc_state;
 
-   signal timer           : std_logic_vector(4 downto 0);
-   signal address         : std_logic_vector(31 downto 0);
-   signal address_2       : std_logic_vector(31 downto 0);
-   signal size            : std_logic_vector(31 downto 0); 
-   signal size_2          : std_logic_vector(31 downto 0);
-   signal send_address     : std_logic_vector(31 downto 0);
-   signal send_address_2   : std_logic_vector(31 downto 0);
-   signal send_size        : std_logic_vector(31 downto 0); 
-   signal send_size_2      : std_logic_vector(31 downto 0);
-   signal recv_address     : std_logic_vector(31 downto 0);
-   signal recv_size        : std_logic_vector(31 downto 0); 
-   signal prio             : std_logic;
-   signal operation        : std_logic;
-   signal read_av          : std_logic;
-   signal slot_available   : std_logic;
-   signal read_enable      : std_logic;
-   signal write_enable     : std_logic;
+  type arbiter_state is (ROUND, SEND, RECEIVE);
+  signal ARB : arbiter_state;
 
-   signal send_active_2    : std_logic;
-   signal receive_active_2 : std_logic;
-   signal intr_counter_temp : std_logic_vector(3 downto 0);
-   
-   signal reset_dmni_s     : std_logic;
-   signal payload_fix      : regflit;
-   signal sizedata_fix      : regflit;
-   signal novo_pacote      : std_logic;   
-   signal is_dmma          : std_logic;      
+  signal bufferr    : buff_dmni    := (others => (others => '0'));
+  subtype buffsizebool is std_logic_vector(0 to (TAM_BUFFER_DMNI-1));
+  signal is_header  : buffsizebool := (others => '0');
+  signal intr_count : std_logic_vector(3 downto 0);
+
+  signal first, last : pointer := (others => '0');
+  signal add_buffer  : std_logic;
+
+  signal payload_size : regflit;
+
+  signal timer          : std_logic_vector(4 downto 0);
+  signal address        : std_logic_vector(31 downto 0);
+  signal address_2      : std_logic_vector(31 downto 0);
+  signal size           : std_logic_vector(31 downto 0);
+  signal size_2         : std_logic_vector(31 downto 0);
+  signal send_address   : std_logic_vector(31 downto 0);
+  signal send_address_2 : std_logic_vector(31 downto 0);
+  signal send_size      : std_logic_vector(31 downto 0);
+  signal send_size_2    : std_logic_vector(31 downto 0);
+  signal recv_address   : std_logic_vector(31 downto 0);
+  signal recv_size      : std_logic_vector(31 downto 0);
+  signal prio           : std_logic;
+  signal operation      : std_logic;
+  signal read_av        : std_logic;
+  signal slot_available : std_logic;
+  signal read_enable    : std_logic;
+  signal write_enable   : std_logic;
+
+  signal send_active_2     : std_logic;
+  signal receive_active_2  : std_logic;
+  signal intr_counter_temp : std_logic_vector(3 downto 0);
+
+  signal reset_dmni_s : std_logic;
+  signal payload_fix  : regflit;
+  signal sizedata_fix : regflit;
+  signal novo_pacote  : std_logic;
+  signal recv_op      : operation_type;
 begin
   --config
-  proc_config: process(clock)
-  begin 
+  proc_config : process(clock)
+  begin
     if(clock'event and clock = '1') then
       if (set_address = '1') then
-        address <= config_data;
+        address   <= config_data;
         address_2 <= (others => '0');
       elsif (set_address_2 = '1') then
         address_2 <= config_data;
       elsif (set_size = '1') then
-        size <= config_data;
+        size   <= config_data;
         size_2 <= (others => '0');
       elsif (set_size_2 = '1') then
         size_2 <= config_data;
@@ -131,279 +132,285 @@ begin
     end if;
   end process proc_config;
 
-  mem_address <= send_address when write_enable = '1' else recv_address;
-  credit_o <= slot_available;
-  slot_available <= '0' when (first = last and add_buffer = '1') else '1';
-  read_av <= '0' when (first = last and add_buffer = '0') else '1';
-  clock_tx <= clock;
-  send_active <= send_active_2;
+  mem_address    <= send_address when write_enable = '1'                  else recv_address;
+  credit_o       <= slot_available;
+  slot_available <= '0'          when (first = last and add_buffer = '1') else '1';
+  read_av        <= '0'          when (first = last and add_buffer = '0') else '1';
+  clock_tx       <= clock;
+  send_active    <= send_active_2;
   receive_active <= receive_active_2;
 
-  arbiter: process (clock,reset)
-  begin   
+  arbiter : process (clock, reset)
+  begin
     if reset = '1' then
-      read_enable <= '0';
+      read_enable  <= '0';
       write_enable <= '0';
-      timer <= "00000";
-      prio <= '0';
-      ARB <= ROUND;
-      elsif (clock'event and clock = '1') then            
-          case ARB is                
-              when ROUND =>
-                  if prio = '0' then
-                    if (DMNI_Receive = COPY_TO_MEM or DMNI_Receive = COPY_TO_MEM_DMA) then
-                       ARB <= RECEIVE;
-                       read_enable <= '1';                        
-                    elsif send_active_2 = '1' then
-                       ARB <= SEND;
-                       write_enable <= '1';
-                    end if;
-                  else
-                    if send_active_2 = '1' then
-                      ARB <= SEND;
-                      write_enable <= '1';
-                    elsif (DMNI_Receive = COPY_TO_MEM or DMNI_Receive = COPY_TO_MEM_DMA) then
-                      ARB <= RECEIVE;
-                      read_enable <= '1';
-                    end if;
-                  end if;
+      timer        <= "00000";
+      prio         <= '0';
+      ARB          <= ROUND;
+    elsif (clock'event and clock = '1') then
+      case ARB is
+        when ROUND =>
+          if prio = '0' then
+            if (DMNI_Receive = COPY_TO_MEM or DMNI_Receive = COPY_TO_MEM_DMA) then
+              ARB         <= RECEIVE;
+              read_enable <= '1';
+            elsif send_active_2 = '1' then
+              ARB          <= SEND;
+              write_enable <= '1';
+            end if;
+          else
+            if send_active_2 = '1' then
+              ARB          <= SEND;
+              write_enable <= '1';
+            elsif (DMNI_Receive = COPY_TO_MEM or DMNI_Receive = COPY_TO_MEM_DMA) then
+              ARB         <= RECEIVE;
+              read_enable <= '1';
+            end if;
+          end if;
 
-              when SEND =>
-                  if DMNI_Send = FINISH or (timer = DMNI_TIMER and receive_active_2 = '1')  then   
-                    timer <= "00000";
-                    ARB <= ROUND;
-                    write_enable <= '0';
-                    prio <= not prio;
-                  else
-                      timer <= timer + '1';
-                  end if;            
-          
-              when RECEIVE =>            
-                  if DMNI_Receive = FINISH or (timer = DMNI_TIMER and send_active_2 = '1') then                   
-                    timer <= "00000";
-                    ARB <= ROUND;
-                    read_enable <= '0';
-                    prio <= not prio;
-                  else
-                      timer <= timer + '1';
-                  end if;
-          end case;   
-      end if;
-  end process arbiter; 
+        when SEND =>
+          if DMNI_Send = FINISH or (timer = DMNI_TIMER and receive_active_2 = '1') then
+            timer        <= "00000";
+            ARB          <= ROUND;
+            write_enable <= '0';
+            prio         <= not prio;
+          else
+            timer <= timer + '1';
+          end if;
+
+        when RECEIVE =>
+          if DMNI_Receive = FINISH or (timer = DMNI_TIMER and send_active_2 = '1') then
+            timer       <= "00000";
+            ARB         <= ROUND;
+            read_enable <= '0';
+            prio        <= not prio;
+          else
+            timer <= timer + '1';
+          end if;
+      end case;
+    end if;
+  end process arbiter;
 
   proc_receive : process (clock, reset)
-  begin 
+  begin
     if (reset = '1') then
       reset_dmni_s <= '1';
-      payload_fix <= (others=>'0');  
-      sizedata_fix <= (others=>'0');
-      novo_pacote <= '0';
-      is_dmma <= '0';
-      
-      first <= (others=> '0');
-      last <= (others=> '0');
-      payload_size <= (others=> '0');
-      SR <= HEADER;
-      add_buffer <= '0';
-      receive_active_2 <= '0';
-      DMNI_Receive <= WAIT_state;
-      recv_address <= (others=> '0');
-      recv_size <= (others=> '0');
-      mem_data_write <= (others=> '0');
-      is_header <= (others=> '0');
-      intr_counter_temp <= (others=> '0');        
-      mem_byte_we <= (others=> '0');  
-    elsif (clock'event and clock = '1') then
-      if (rx ='1' and slot_available = '1') then
-        bufferr(CONV_INTEGER(last)) <= data_in;
-        add_buffer <= '1';
-        last <= last + 1;
-        --Read from NoC
-        case( SR ) is           
-           when HEADER =>
-             intr_counter_temp <= intr_counter_temp + 1;
-             assert address_router = x"0000"
-               report   "Master receiving msg"                     
-             severity note;
-             is_header(CONV_INTEGER(last)) <= '1';
-             SR <= PAYLOAD;
-           when PAYLOAD =>
-             is_header(CONV_INTEGER(last)) <= '0';
-             payload_size <= data_in - 1;
-             payload_fix <= data_in - 1;
-             sizedata_fix  <= data_in - 12;
-             SR <= DATA;
-           when DATA =>
-             novo_pacote <= '1';
-             is_header(CONV_INTEGER(last)) <= '0';
-             if(payload_size = 0) then
-                SR <= HEADER;
-                novo_pacote <= '0';
-                is_dmma <= '0';
-             else  
-                payload_size <= payload_size - 1;
+      payload_fix  <= (others => '0');
+      sizedata_fix <= (others => '0');
+      novo_pacote  <= '0';
+      recv_op      <= LEGACY;
 
-                if (payload_size = payload_fix) then
-                   if (data_in = x"00000300") then --Service 300 start_cpu
-                     reset_dmni_s <= '0';
-                   end if;
+      first             <= (others => '0');
+      last              <= (others => '0');
+      payload_size      <= (others => '0');
+      SR                <= HEADER;
+      add_buffer        <= '0';
+      receive_active_2  <= '0';
+      DMNI_Receive      <= WAIT_state;
+      recv_address      <= (others => '0');
+      recv_size         <= (others => '0');
+      mem_data_write    <= (others => '0');
+      is_header         <= (others => '0');
+      intr_counter_temp <= (others => '0');
+      mem_byte_we       <= (others => '0');
+    elsif (clock'event and clock = '1') then
+      if (rx = '1' and slot_available = '1') then
+        bufferr(CONV_INTEGER(last)) <= data_in;
+        add_buffer                  <= '1';
+        last                        <= last + 1;
+        --Read from NoC
+        case SR is
+          when HEADER =>
+            intr_counter_temp <= intr_counter_temp + 1;
+            assert address_router = x"0000"
+              report "Master receiving msg"
+              severity note;
+            is_header(CONV_INTEGER(last)) <= '1';
+            SR                            <= PAYLOAD;
+          when PAYLOAD =>
+            is_header(CONV_INTEGER(last)) <= '0';
+            payload_size                  <= data_in - 1;
+            payload_fix                   <= data_in - 1;
+            sizedata_fix                  <= data_in - 12;
+            SR                            <= DATA;
+          when DATA =>
+            novo_pacote                   <= '1';
+            is_header(CONV_INTEGER(last)) <= '0';
+            if(payload_size = 0) then
+              SR          <= HEADER;
+              novo_pacote <= '0';
+              recv_op     <= LEGACY;
+            else
+              payload_size <= payload_size - 1;
+
+              if (payload_size = payload_fix) then
+                if (data_in = x"00000300") then  --Service 300 start_cpu
+                  reset_dmni_s <= '0';
+                  recv_op      <= START_CPU;
                 end if;
-               if (payload_size = payload_fix) then
-                   if (data_in = x"00000290") then --Service 290 dmni_operation
-                     is_dmma <= '1';
-                   end if;
-               end if;              
-             end if;
-         end case ; 
-      end if; --(rx ='1' and slot_available = '1') 
+              end if;
+              if (payload_size = payload_fix) then
+                if (data_in = x"00000290") then  --Service 290 dmni_operation
+                  recv_op <= DMMA;
+                end if;
+              end if;
+            end if;
+        end case;
+      end if;  --(rx ='1' and slot_available = '1') 
 
       --Write to memory
-      case( DMNI_Receive ) is        
+      case DMNI_Receive is
         when WAIT_state =>
-          if ((start = '1' and operation = '1') or novo_pacote = '1' ) then
-            --recv_address <= address - WORD_SIZE;
-            --recv_size <= size - 1;
-            recv_address <= (others=> '0');
-            recv_size <= payload_fix + 2; 
+          if ((start = '1' and operation = '1') or novo_pacote = '1') then
+            recv_address <= address - WORD_SIZE;
+            recv_size    <= size - 1;
             if(is_header(CONV_INTEGER(first)) = '1' and intr_counter_temp > 0) then
               intr_counter_temp <= intr_counter_temp -1;
             end if;
             receive_active_2 <= '1';
-            if(is_dmma = '1') then
-              DMNI_Receive <= COPY_TO_MEM_DMA;
-            else
-              DMNI_Receive <= COPY_TO_MEM;
-            end if;
+            case recv_op is
+              when LEGACY    => DMNI_Receive <= COPY_TO_MEM;
+              when DMMA      => DMNI_Receive <= COPY_TO_MEM_DMA;
+              when START_CPU => DMNI_Receive <= DISCARD;
+            end case;
           end if;
 
         when COPY_TO_MEM =>
           if (read_enable = '1' and read_av = '1') then
-            --mem_byte_we <= "1111";
-            --mem_data_write <= bufferr(CONV_INTEGER(first));
-            --recv_address <= recv_address + WORD_SIZE;
-            recv_address <= (others=> '0');
-            mem_byte_we <= "0000";
-            mem_data_write <= (others=> '0');
-            first <= first + 1;
-            add_buffer <= '0';
-            recv_size <= recv_size -1;
+            mem_byte_we    <= "1111";
+            mem_data_write <= bufferr(CONV_INTEGER(first));
+            recv_address   <= recv_address + WORD_SIZE;
+            first          <= first + 1;
+            add_buffer     <= '0';
+            recv_size      <= recv_size -1;
             if (recv_size = 0) then
               DMNI_Receive <= FINISH;
-            end if ; 
+            end if;
           else
             mem_byte_we <= "0000";
           end if;
-          
+
+        when DISCARD =>
+          recv_address   <= (others => '0');
+          mem_byte_we    <= "0000";
+          mem_data_write <= (others => '0');
+          first          <= first + 1;
+          add_buffer     <= '0';
+          recv_size      <= recv_size -1;
+          if (recv_size = 0) then
+            DMNI_Receive <= FINISH;
+          end if;
+
         when COPY_TO_MEM_DMA =>
-          if (read_enable = '1' and read_av = '1') then   
-            if (recv_size <= sizedata_fix) then          
-              mem_byte_we <= "1111";
+          if (read_enable = '1' and read_av = '1') then
+            if (recv_size <= sizedata_fix) then
+              mem_byte_we    <= "1111";
               mem_data_write <= bufferr(CONV_INTEGER(first));
-              recv_address <= recv_address + WORD_SIZE; 
+              recv_address   <= recv_address + WORD_SIZE;
             else
-              mem_byte_we <= "0000";
-              mem_data_write <= (others=> '0');
-              recv_address <= (others=> '0');
+              mem_byte_we    <= "0000";
+              mem_data_write <= (others => '0');
+              recv_address   <= (others => '0');
             end if;
-            first <= first + 1; 
+            first      <= first + 1;
             add_buffer <= '0';
-            recv_size <= recv_size -1;
+            recv_size  <= recv_size -1;
             if (recv_size = 0) then
               DMNI_Receive <= FINISH;
-            end if ; 
+            end if;
           else
             mem_byte_we <= "0000";
-          end if;           
-          
+          end if;
 
         when FINISH =>
           receive_active_2 <= '0';
-          mem_byte_we <= "0000";
-          recv_address <= (others=> '0');
-          recv_size <= (others=> '0');
-          DMNI_Receive <= WAIT_state;
-        when OTHERS => 
+          mem_byte_we      <= "0000";
+          recv_address     <= (others => '0');
+          recv_size        <= (others => '0');
+          DMNI_Receive     <= WAIT_state;
+        when others =>
       end case;
-    end if; --rising_edge(clock)
+    end if;  --rising_edge(clock)
   end process proc_receive;
 
   intr_count <= intr_counter_temp;
-  intr <= '1' when intr_counter_temp > 0 else '0';
+  intr       <= '1' when intr_counter_temp > 0 else '0';
   reset_dmni <= reset_dmni_s;
 
   proc_send : process (clock, reset)
-  begin 
+  begin
     if(reset = '1') then
-      DMNI_Send <= WAIT_state;
-      send_active_2 <= '0';     
-      tx <= '0';   
-      send_size <= (others=> '0');
-      send_size_2 <= (others=> '0');
-      send_address <= (others=> '0');
-      send_address_2 <= (others=> '0');
-      data_out <= (others=> '0');
+      DMNI_Send      <= WAIT_state;
+      send_active_2  <= '0';
+      tx             <= '0';
+      send_size      <= (others => '0');
+      send_size_2    <= (others => '0');
+      send_address   <= (others => '0');
+      send_address_2 <= (others => '0');
+      data_out       <= (others => '0');
     elsif (clock'event and clock = '1') then
-      case( DMNI_Send ) is        
+      case DMNI_Send is
         when WAIT_state =>
           if (start = '1' and operation = '0') then
-            send_address <= address;
+            send_address   <= address;
             send_address_2 <= address_2;
-            send_size <= size;
-            send_size_2 <= size_2;              
-            send_active_2 <= '1';
-            DMNI_Send <= LOAD;           
+            send_size      <= size;
+            send_size_2    <= size_2;
+            send_active_2  <= '1';
+            DMNI_Send      <= LOAD;
             assert address_router = x"0000"
-              report   "Master sending msg"                     
-            severity note;
-          end if ;
+              report "Master sending msg"
+              severity note;
+          end if;
 
         when LOAD =>
           if(credit_i = '1' and write_enable = '1') then
             send_address <= send_address + WORD_SIZE;
-            DMNI_Send <= COPY_FROM_MEM;
+            DMNI_Send    <= COPY_FROM_MEM;
           end if;
 
         when COPY_FROM_MEM =>
           if(credit_i = '1' and write_enable = '1') then
-                  if(send_size > 0) then
-                    tx <= '1';
-                    data_out <= mem_data_read;
-                    send_address <= send_address + WORD_SIZE;
-                    send_size <= send_size -1;
-                  elsif (send_size_2 > 0) then
-                    send_size <= send_size_2;
-                    send_size_2 <= (others=> '0');
-                    tx <= '0';
-                    if(send_address_2(30 downto 28) = "000") then
-                      send_address <= send_address_2;
-                    else
-                      send_address <= send_address_2 - WORD_SIZE;
-                    end if;
-                    DMNI_Send <= LOAD;
-                  else
-                    tx <= '0';
-                    DMNI_Send <= FINISH;
-                  end if;
+            if(send_size > 0) then
+              tx           <= '1';
+              data_out     <= mem_data_read;
+              send_address <= send_address + WORD_SIZE;
+              send_size    <= send_size -1;
+            elsif (send_size_2 > 0) then
+              send_size   <= send_size_2;
+              send_size_2 <= (others => '0');
+              tx          <= '0';
+              if(send_address_2(30 downto 28) = "000") then
+                send_address <= send_address_2;
+              else
+                send_address <= send_address_2 - WORD_SIZE;
+              end if;
+              DMNI_Send <= LOAD;
+            else
+              tx        <= '0';
+              DMNI_Send <= FINISH;
+            end if;
           else
-                if (credit_i = '0') then
-                  send_size <= send_size + 1;
-                  send_address <= send_address - WORD_SIZE - WORD_SIZE; -- address back 2 positions 
-                else
-                  send_address <= send_address - WORD_SIZE; -- address back 1 position
-                end if;
-                tx <= '0';
-                DMNI_Send <= LOAD;
+            if (credit_i = '0') then
+              send_size    <= send_size + 1;
+              send_address <= send_address - WORD_SIZE - WORD_SIZE;  -- address back 2 positions 
+            else
+              send_address <= send_address - WORD_SIZE;  -- address back 1 position
+            end if;
+            tx        <= '0';
+            DMNI_Send <= LOAD;
           end if;
 
         when FINISH =>
-          send_active_2     <= '0';
-          send_address    <= (others=> '0');
-          send_address_2  <= (others=> '0');
-          send_size       <= (others=> '0');
-          send_size_2     <= (others=> '0');
-          DMNI_Send       <= WAIT_state;
-        when OTHERS =>
-      end case ;
-    end if; --rising_edge(clock)
-  end process proc_send;      
+          send_active_2  <= '0';
+          send_address   <= (others => '0');
+          send_address_2 <= (others => '0');
+          send_size      <= (others => '0');
+          send_size_2    <= (others => '0');
+          DMNI_Send      <= WAIT_state;
+        when others =>
+      end case;
+    end if;  --rising_edge(clock)
+  end process proc_send;
 end dmni;
