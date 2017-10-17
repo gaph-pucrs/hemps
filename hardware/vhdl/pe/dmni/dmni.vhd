@@ -245,6 +245,7 @@ begin
               if (payload_size = payload_fix) then
                 if (data_in = x"00000300") then  --Service 300 start_cpu
                   reset_dmni_s <= '0';
+                  novo_pacote  <= '1';
                   recv_op      <= START_CPU;
                 end if;
               end if;
