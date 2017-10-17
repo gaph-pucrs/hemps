@@ -24,38 +24,36 @@ use work.standards.all;
 
 entity dmni is
   generic(address_router : regmetadeflit := (others => '0'));
-  port
-    (
-      clock          : in  std_logic;
-      reset          : in  std_logic;
-      -- Configuration interface
-      set_address    : in  std_logic;
-      set_address_2  : in  std_logic;
-      set_size       : in  std_logic;
-      set_size_2     : in  std_logic;
-      set_op         : in  std_logic;
-      start          : in  std_logic;
-      config_data    : in  std_logic_vector(31 downto 0);
-      -- Status outputs
-      intr           : out std_logic;
-      send_active    : out std_logic;
-      receive_active : out std_logic;
-      reset_dmni     : out std_logic;
-      -- Memory interface
-      mem_address    : out std_logic_vector(31 downto 0);
-      mem_data_write : out std_logic_vector(31 downto 0);
-      mem_data_read  : in  std_logic_vector(31 downto 0);
-      mem_byte_we    : out std_logic_vector(3 downto 0);
-      -- Noc Interface (Local port)
-      tx             : out std_logic;
-      data_out       : out regflit;
-      credit_i       : in  std_logic;
-      clock_tx       : out std_logic;
-      rx             : in  std_logic;
-      data_in        : in  regflit;
-      credit_o       : out std_logic;
-      clock_rx       : in  std_logic
-      );
+  port(
+    clock          : in  std_logic;
+    reset          : in  std_logic;
+    -- Configuration interface
+    set_address    : in  std_logic;
+    set_address_2  : in  std_logic;
+    set_size       : in  std_logic;
+    set_size_2     : in  std_logic;
+    set_op         : in  std_logic;
+    start          : in  std_logic;
+    config_data    : in  std_logic_vector(31 downto 0);
+    -- Status outputs
+    intr           : out std_logic;
+    send_active    : out std_logic;
+    receive_active : out std_logic;
+    reset_dmni     : out std_logic;
+    -- Memory interface
+    mem_address    : out std_logic_vector(31 downto 0);
+    mem_data_write : out std_logic_vector(31 downto 0);
+    mem_data_read  : in  std_logic_vector(31 downto 0);
+    mem_byte_we    : out std_logic_vector(3 downto 0);
+    -- Noc Interface (Local port)
+    tx             : out std_logic;
+    data_out       : out regflit;
+    credit_i       : in  std_logic;
+    clock_tx       : out std_logic;
+    rx             : in  std_logic;
+    data_in        : in  regflit;
+    credit_o       : out std_logic;
+    clock_rx       : in  std_logic);
 end;
 
 architecture dmni of dmni is
@@ -219,6 +217,7 @@ begin
         bufferr(CONV_INTEGER(last)) <= data_in;
         add_buffer                  <= '1';
         last                        <= last + 1;
+
         --Read from NoC
         case SR is
           when HEADER =>
@@ -235,7 +234,6 @@ begin
             sizedata_fix                  <= data_in - 12;
             SR                            <= DATA;
           when DATA =>
-            novo_pacote                   <= '1';
             is_header(CONV_INTEGER(last)) <= '0';
             if(payload_size = 0) then
               SR          <= HEADER;
@@ -252,7 +250,8 @@ begin
               end if;
               if (payload_size = payload_fix) then
                 if (data_in = x"00000290") then  --Service 290 dmni_operation
-                  recv_op <= DMMA;
+                  novo_pacote <= '1';
+                  recv_op     <= DMMA;
                 end if;
               end if;
             end if;
