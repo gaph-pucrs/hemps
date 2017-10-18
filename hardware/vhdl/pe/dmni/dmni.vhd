@@ -270,9 +270,16 @@ begin
             end if;
             receive_active_2 <= '1';
             case recv_op is
-              when LEGACY    => DMNI_Receive <= COPY_TO_MEM;
-              when DMMA      => DMNI_Receive <= COPY_TO_MEM_DMA;
-              when START_CPU => DMNI_Receive <= DISCARD;
+              when LEGACY =>
+                DMNI_Receive <= COPY_TO_MEM;
+                recv_size    <= size - 1;
+                recv_address <= address - WORD_SIZE;
+              when DMMA =>
+                DMNI_Receive <= COPY_TO_MEM_DMA;
+                recv_size    <= payload_fix + 2;
+                recv_address <= (others => '0');
+              when START_CPU =>
+                DMNI_Receive <= DISCARD;
             end case;
           end if;
 
