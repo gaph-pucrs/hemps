@@ -54,6 +54,7 @@ package standards is
 
   constant DMNI_SEND_ACTIVE    : std_logic_vector(31 downto 0) := x"20000250";
   constant DMNI_RECEIVE_ACTIVE : std_logic_vector(31 downto 0) := x"20000260";
+  constant DMNI_RECEIVE_BUFFER : std_logic_vector(31 downto 0) := x"20000264";
 
   constant SCHEDULING_REPORT : std_logic_vector(31 downto 0) := x"20000270";
 

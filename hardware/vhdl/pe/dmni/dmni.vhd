@@ -34,6 +34,7 @@ entity dmni is
     set_size_2     : in  std_logic;
     set_op         : in  std_logic;
     start          : in  std_logic;
+    set_buff       : in  std_logic;
     config_data    : in  std_logic_vector(31 downto 0);
     -- Status outputs
     intr           : out std_logic;
@@ -93,6 +94,8 @@ architecture dmni of dmni is
   signal send_size_2    : std_logic_vector(31 downto 0);
   signal recv_address   : std_logic_vector(31 downto 0);
   signal recv_size      : std_logic_vector(31 downto 0);
+  signal recv_buffer    : std_logic_vector(31 downto 0);
+  signal dmma_done      : std_logic;
   signal prio           : std_logic;
   signal operation      : std_logic;
   signal read_av        : std_logic;
@@ -107,13 +110,14 @@ architecture dmni of dmni is
   signal reset_dmni_s : std_logic;
   signal payload_fix  : regflit;
   signal sizedata_fix : regflit;
-  signal novo_pacote  : std_logic;
   signal recv_op      : operation_type;
 begin
   --config
   proc_config : process(clock)
   begin
-    if(clock'event and clock = '1') then
+    if reset = '1' then
+      recv_buffer <= (others => '0');
+    elsif(clock'event and clock = '1') then
       if (set_address = '1') then
         address   <= config_data;
         address_2 <= (others => '0');
@@ -126,6 +130,10 @@ begin
         size_2 <= config_data;
       elsif (set_op = '1') then
         operation <= config_data(0);
+      elsif set_buff = '1' then
+        recv_buffer <= config_data;
+      elsif dmma_done = '1' then
+        recv_buffer(0) <= '1';
       end if;
     end if;
   end process proc_config;
@@ -193,12 +201,11 @@ begin
   proc_receive : process (clock, reset)
   begin
     if (reset = '1') then
-      reset_dmni_s <= '1';
-      payload_fix  <= (others => '0');
-      sizedata_fix <= (others => '0');
-      novo_pacote  <= '0';
-      recv_op      <= LEGACY;
-
+      reset_dmni_s      <= '1';
+      payload_fix       <= (others => '0');
+      sizedata_fix      <= (others => '0');
+      recv_op           <= LEGACY;
+      dmma_done         <= '0';
       first             <= (others => '0');
       last              <= (others => '0');
       payload_size      <= (others => '0');
@@ -231,28 +238,25 @@ begin
             is_header(CONV_INTEGER(last)) <= '0';
             payload_size                  <= data_in - 1;
             payload_fix                   <= data_in - 1;
-            sizedata_fix                  <= data_in - 12;
+            sizedata_fix                  <= data_in - 2;
             SR                            <= DATA;
           when DATA =>
             is_header(CONV_INTEGER(last)) <= '0';
             if(payload_size = 0) then
-              SR          <= HEADER;
-              novo_pacote <= '0';
-              recv_op     <= LEGACY;
+              SR      <= HEADER;
+              recv_op <= LEGACY;
             else
               payload_size <= payload_size - 1;
 
               if (payload_size = payload_fix) then
                 if (data_in = x"00000300") then  --Service 300 start_cpu
                   reset_dmni_s <= '0';
-                  novo_pacote  <= '1';
                   recv_op      <= START_CPU;
                 end if;
               end if;
               if (payload_size = payload_fix) then
                 if (data_in = x"00000290") then  --Service 290 dmni_operation
-                  novo_pacote <= '1';
-                  recv_op     <= DMMA;
+                  recv_op <= DMMA;
                 end if;
               end if;
             end if;
@@ -262,9 +266,9 @@ begin
       --Write to memory
       case DMNI_Receive is
         when WAIT_state =>
-          if ((start = '1' and operation = '1') or novo_pacote = '1') then
-            recv_address <= address - WORD_SIZE;
-            recv_size    <= size - 1;
+          if (recv_op = LEGACY and start = '1' and operation = '1') or
+            (rect_op = DMMA and recv_buffer(0) = '0') or
+            (recv_op = START_CPU) then
             if(is_header(CONV_INTEGER(first)) = '1' and intr_counter_temp > 0) then
               intr_counter_temp <= intr_counter_temp -1;
             end if;
@@ -277,9 +281,11 @@ begin
               when DMMA =>
                 DMNI_Receive <= COPY_TO_MEM_DMA;
                 recv_size    <= payload_fix + 2;
-                recv_address <= (others => '0');
+                recv_address <= recv_buffer(31 downto 2) & "00";
               when START_CPU =>
                 DMNI_Receive <= DISCARD;
+                recv_size    <= payload_fix + 2;
+                recv_address <= (others => '0');
             end case;
           end if;
 
@@ -310,24 +316,29 @@ begin
           end if;
 
         when COPY_TO_MEM_DMA =>
-          if (read_enable = '1' and read_av = '1') then
-            if (recv_size <= sizedata_fix) then
+          if (recv_size <= sizedata_fix) then
+            if (read_enable = '1' and read_av = '1') then
               mem_byte_we    <= "1111";
               mem_data_write <= bufferr(CONV_INTEGER(first));
               recv_address   <= recv_address + WORD_SIZE;
+              first          <= first + 1;
+              add_buffer     <= '0';
+              recv_size      <= recv_size -1;
+              if (recv_size = 0) then
+                dmma_done    <= '1';
+                DMNI_Receive <= FINISH;
+              end if;
             else
-              mem_byte_we    <= "0000";
-              mem_data_write <= (others => '0');
-              recv_address   <= (others => '0');
+              mem_byte_we <= "0000";
             end if;
+          else
             first      <= first + 1;
             add_buffer <= '0';
             recv_size  <= recv_size -1;
             if (recv_size = 0) then
+              dmma_done    <= '1';
               DMNI_Receive <= FINISH;
             end if;
-          else
-            mem_byte_we <= "0000";
           end if;
 
         when FINISH =>
