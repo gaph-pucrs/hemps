@@ -266,13 +266,12 @@ begin
       --Write to memory
       case DMNI_Receive is
         when WAIT_state =>
-          if (recv_op = LEGACY and start = '1' and operation = '1') or
-            (rect_op = DMMA and recv_buffer(0) = '0') or
-            (recv_op = START_CPU) then
+          if ( (recv_op = LEGACY and start = '1' and operation = '1') or (recv_op = DMMA and recv_buffer (0) = '0') or (recv_op = START_CPU) )then
             if(is_header(CONV_INTEGER(first)) = '1' and intr_counter_temp > 0) then
               intr_counter_temp <= intr_counter_temp -1;
             end if;
             receive_active_2 <= '1';
+
             case recv_op is
               when LEGACY =>
                 DMNI_Receive <= COPY_TO_MEM;
