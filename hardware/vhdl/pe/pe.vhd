@@ -79,6 +79,7 @@ architecture structural of pe is
   signal cpu_set_address_2             : std_logic;
   signal cpu_set_op                    : std_logic;
   signal cpu_start                     : std_logic;
+  signal cpu_set_buff                  : std_logic;
   signal clock_aux                     : std_logic;
   signal clock_hold_s                  : std_logic;
   signal pending_service               : std_logic;
@@ -212,8 +213,7 @@ begin
 
   dmni : entity work.dmni
     generic map(
-      address_router => router_address
-      )
+      address_router => router_address)
     port map(
       clock         => clock,
       reset         => reset,
@@ -225,6 +225,7 @@ begin
       set_op        => cpu_set_op,
       start         => cpu_start,
       config_data   => dmni_data_read,
+      set_buff      => cpu_set_buff,
 
       -- Status outputs
       intr           => ni_intr,
@@ -324,12 +325,13 @@ begin
   irq_status(1)            <= '1'           when dmni_send_active_sig = '0' and slack_update_timer = SLACK_MONITOR_WINDOW else '0';
   irq_status(0)            <= (not dmni_send_active_sig and pending_service);
 
-  cpu_set_size      <= '1' when cpu_mem_address_reg = DMNI_SIZE and write_enable = '1'    else '0';
-  cpu_set_address   <= '1' when cpu_mem_address_reg = DMNI_ADDR and write_enable = '1'    else '0';
-  cpu_set_size_2    <= '1' when cpu_mem_address_reg = DMNI_SIZE_2 and write_enable = '1'  else '0';
-  cpu_set_address_2 <= '1' when cpu_mem_address_reg = DMNI_ADDR_2 and write_enable = '1'  else '0';
-  cpu_set_op        <= '1' when (cpu_mem_address_reg = DMNI_OP and write_enable = '1')    else '0';
-  cpu_start         <= '1' when (cpu_mem_address_reg = START_DMNI and write_enable = '1') else '0';
+  cpu_set_size      <= '1' when cpu_mem_address_reg = DMNI_SIZE and write_enable = '1'           else '0';
+  cpu_set_address   <= '1' when cpu_mem_address_reg = DMNI_ADDR and write_enable = '1'           else '0';
+  cpu_set_size_2    <= '1' when cpu_mem_address_reg = DMNI_SIZE_2 and write_enable = '1'         else '0';
+  cpu_set_address_2 <= '1' when cpu_mem_address_reg = DMNI_ADDR_2 and write_enable = '1'         else '0';
+  cpu_set_op        <= '1' when cpu_mem_address_reg = DMNI_OP and write_enable = '1'             else '0';
+  cpu_start         <= '1' when cpu_mem_address_reg = START_DMNI and write_enable = '1'          else '0';
+  cpu_set_buff      <= '1' when cpu_mem_address_reg = DMNI_RECEIVE_BUFFER and write_enable = '1' else '0';
 
   write_enable <= '1' when cpu_mem_write_byte_enable_reg /= "0000" else '0';
 

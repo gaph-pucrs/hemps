@@ -199,15 +199,14 @@ void read_packet(ServiceHeader *p){
 
   MemoryWrite(DMNI_SIZE, 6);
   MemoryWrite(DMNI_OP, WRITE);
-  MemoryWrite(DMNI_ADDRESS, 0x4001);
+  MemoryWrite(DMNI_ADDRESS, 0x4000);
   MemoryWrite(DMNI_START, 1);
   //Waits the DMNI copy all data to memory before release the software to access it
   //while (noc_interruption != 1)
   while (MemoryRead(DMNI_RECEIVE_ACTIVE));
 
-  p = 0x4001;
+  p = 0x4000;
 }
-
 
 
 
@@ -247,10 +246,10 @@ int main()
 
 
       int data_receive[4];
-      data_receive[0] = MemoryRead(0x4001);
-      data_receive[1] = MemoryRead(0x4002);
-      data_receive[2] = MemoryRead(0x4003);
-      data_receive[3] = 4;
+      data_receive[0] = MemoryRead(0x4000);
+      data_receive[1] = MemoryRead(0x4004);
+      data_receive[2] = MemoryRead(0x4008);
+      data_receive[3] = MemoryRead(0x400C);
 
       transmite(0x00000101 ,MESSAGE_DELIVERY, data_receive ,4);
 
