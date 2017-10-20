@@ -41,6 +41,7 @@ entity dmni is
     send_active    : out std_logic;
     receive_active : out std_logic;
     reset_dmni     : out std_logic;
+    recv_buff_out  : out std_logic_vector(31 downto 0);
     -- Memory interface
     mem_address    : out std_logic_vector(31 downto 0);
     mem_data_write : out std_logic_vector(31 downto 0);
@@ -145,6 +146,7 @@ begin
   clock_tx       <= clock;
   send_active    <= send_active_2;
   receive_active <= receive_active_2;
+  recv_buff_out  <= recv_buffer;
 
   arbiter : process (clock, reset)
   begin
@@ -266,7 +268,7 @@ begin
       --Write to memory
       case DMNI_Receive is
         when WAIT_state =>
-          if ((recv_op = LEGACY and start = '1' and operation = '1') or (recv_op = DMMA and recv_buffer (0) = '0') or (recv_op = START_CPU))then
+          if ((recv_op = LEGACY and start = '1' and operation = '1') or (recv_op = DMMA and recv_buffer(0) = '0') or (recv_op = START_CPU))then
             if(is_header(CONV_INTEGER(first)) = '1' and intr_counter_temp > 0) then
               intr_counter_temp <= intr_counter_temp -1;
             end if;
@@ -280,7 +282,7 @@ begin
               when DMMA =>
                 DMNI_Receive <= COPY_TO_MEM_DMA;
                 recv_size    <= payload_fix + 2;
-                recv_address <= recv_buffer(31 downto 2) & "00";
+                recv_address <= recv_buffer - WORD_SIZE;
               when START_CPU =>
                 DMNI_Receive <= DISCARD;
                 recv_size    <= payload_fix + 2;
@@ -345,6 +347,7 @@ begin
           mem_byte_we      <= "0000";
           recv_address     <= (others => '0');
           recv_size        <= (others => '0');
+          dmma_done        <= '0';
           DMNI_Receive     <= WAIT_state;
         when others =>
       end case;

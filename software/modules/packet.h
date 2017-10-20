@@ -17,7 +17,7 @@
 
 #include "../../include/kernel_pkg.h"
 
-#define CONSTANT_PKT_SIZE	13	//!<Constant Service Header size, based on the structure ServiceHeader.
+#define CONSTANT_PKT_SIZE	3	//!<Constant Service Header size, based on the structure ServiceHeader.
 
 /**
  * \brief This structure is in charge to defines the ServiceHeader field that can be filled by the software part

@@ -115,6 +115,7 @@ architecture structural of pe is
   signal data_av                    : std_logic;
   signal end_sim_reg                : std_logic_vector(31 downto 0);
   signal uart_write_data            : std_logic;
+  signal dmni_recv_buff                  : std_logic_vector(31 downto 0);
 
   signal slack_update_timer : std_logic_vector(31 downto 0);
 
@@ -207,8 +208,7 @@ begin
       clock_tx => clock_tx_router,
       tx       => tx_router,
       data_out => data_out_router,
-      credit_i => credit_i_router
-      );
+      credit_i => credit_i_router);
 
 
   dmni : entity work.dmni
@@ -232,6 +232,7 @@ begin
       send_active    => dmni_send_active_sig,
       receive_active => dmni_receive_active_sig,
       reset_dmni     => reset_dmni,
+      recv_buff_out  => dmni_recv_buff,
 
       -- Memory interface
       mem_address    => dmni_mem_address,
@@ -297,6 +298,7 @@ begin
                                  req_app                                     when cpu_mem_address_reg = REQ_APP_REG else
                                  ZERO(31 downto 1) & dmni_send_active_sig    when cpu_mem_address_reg = DMNI_SEND_ACTIVE else
                                  ZERO(31 downto 1) & dmni_receive_active_sig when cpu_mem_address_reg = DMNI_RECEIVE_ACTIVE else
+                                 dmni_recv_buff                                   when cpu_mem_address_reg = DMNI_RECEIVE_BUFFER else
                                  data_read_ram;
 
   --Comb assignments

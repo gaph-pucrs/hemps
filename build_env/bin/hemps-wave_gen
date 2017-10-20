@@ -105,8 +105,25 @@ def generate_wave_generic(yaml_r, system_model):
             wave_lines.append(pe_group + cpu_group + signal_path + "/cpu_mem_address_reg\n") 
             wave_lines.append(pe_group + cpu_group + signal_path + "/cpu_mem_data_write_reg\n") 
             wave_lines.append(pe_group + cpu_group + signal_path + "/cpu_mem_data_read\n") 
-            wave_lines.append(pe_group + cpu_group + signal_path + "/cpu_mem_write_byte_enable\n") 
+            wave_lines.append(pe_group + cpu_group + signal_path + "/cpu_mem_write_byte_enable\n")
+
+            memory_group =  "-group MEMORY_"+pe+" "
+            port_a = "-group PORT_A "
+            port_b = "-group PORT_B "
+
+            wave_lines.append(pe_group + memory_group + port_a + signal_path + "/cpu_enable_ram\n") 
+            wave_lines.append(pe_group + memory_group + port_a + signal_path + "/addr_a\n")
+            wave_lines.append(pe_group + memory_group + port_a + signal_path + "/cpu_mem_data_write\n")
+            wave_lines.append(pe_group + memory_group + port_a + signal_path + "/cpu_mem_write_byte_enable\n") 
+            wave_lines.append(pe_group + memory_group + port_a + signal_path + "/data_read_mem\n")
+
+            wave_lines.append(pe_group + memory_group + port_b + signal_path + "/dmni_enable_internal_ram\n")
+            wave_lines.append(pe_group + memory_group + port_b + signal_path + "/dmni_mem_write_byte_enable\n") 
+            wave_lines.append(pe_group + memory_group + port_b + signal_path + "/addr_b\n")
+            wave_lines.append(pe_group + memory_group + port_b + signal_path + "/dmni_mem_data_write\n")
+            wave_lines.append(pe_group + memory_group + port_b + signal_path + "/mem_data_read\n")
             
+             
             router_config = "-group router_config_"+pe+" "
             
             dmni_group = "-group {DMNI "+pe+"} "
@@ -134,7 +151,15 @@ def generate_wave_generic(yaml_r, system_model):
             wave_lines.append(pe_group + dmni_group + config + signal_path + "/set_size_2\n") 
             wave_lines.append(pe_group + dmni_group + config + signal_path + "/set_op\n") 
             wave_lines.append(pe_group + dmni_group + config + signal_path + "/start\n") 
-            wave_lines.append(pe_group + dmni_group + config + signal_path + "/config_data\n") 
+            wave_lines.append(pe_group + dmni_group + config + signal_path + "/config_data\n")
+
+            dmma = "-group dmma_"+pe+" "
+            wave_lines.append(pe_group + dmni_group + dmma + signal_path + "/recv_buffer\n")
+            wave_lines.append(pe_group + dmni_group + dmma + signal_path + "/DMNI_Receive\n")
+            wave_lines.append(pe_group + dmni_group + dmma + signal_path + "/recv_size\n")
+            wave_lines.append(pe_group + dmni_group + dmma + signal_path + "/recv_op\n")
+            wave_lines.append(pe_group + dmni_group + dmma + signal_path + "/dmma_done\n")
+
             
             
             input_name = "EAST", "WEST", "NORTH", "SOUTH", "LOCAL"
