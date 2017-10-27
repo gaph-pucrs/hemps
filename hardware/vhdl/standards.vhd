@@ -20,18 +20,22 @@ use work.hemps_pkg.all;
 
 package standards is
 
+  -- at this moment assume the loader is fixed at router 0 south port
+  constant LOADER_NETADDR : std_logic_vector(31 downto 0) := x"E0000000";
+
 --------------------------------------------------------
 -- CONSTANTS
 --------------------------------------------------------
 -- Memory map constants.
-  constant DEBUG           : std_logic_vector(31 downto 0) := x"20000000";
-  constant IRQ_MASK        : std_logic_vector(31 downto 0) := x"20000010";
-  constant IRQ_STATUS_ADDR : std_logic_vector(31 downto 0) := x"20000020";
-  constant TIME_SLICE_ADDR : std_logic_vector(31 downto 0) := x"20000060";
-  constant FIFO_AVAIL      : std_logic_vector(31 downto 0) := x"20000040";
-  constant END_SIM         : std_logic_vector(31 downto 0) := x"20000080";
-  constant CLOCK_HOLD      : std_logic_vector(31 downto 0) := x"20000090";
-  constant NET_ADDRESS     : std_logic_vector(31 downto 0) := x"20000140";
+  constant DEBUG              : std_logic_vector(31 downto 0) := x"20000000";
+  constant IRQ_MASK           : std_logic_vector(31 downto 0) := x"20000010";
+  constant IRQ_STATUS_ADDR    : std_logic_vector(31 downto 0) := x"20000020";
+  constant TIME_SLICE_ADDR    : std_logic_vector(31 downto 0) := x"20000060";
+  constant FIFO_AVAIL         : std_logic_vector(31 downto 0) := x"20000040";
+  constant END_SIM            : std_logic_vector(31 downto 0) := x"20000080";
+  constant CLOCK_HOLD         : std_logic_vector(31 downto 0) := x"20000090";
+  constant NET_ADDRESS        : std_logic_vector(31 downto 0) := x"20000140";
+  constant LOADER_NETADDR_REG : std_logic_vector(31 downto 0) := x"20000144";
 
   -- Network interface mapping.
   constant NI_STATUS_READ   : std_logic_vector(31 downto 0) := x"20000100";
@@ -59,6 +63,7 @@ package standards is
   constant SCHEDULING_REPORT : std_logic_vector(31 downto 0) := x"20000270";
 
   constant TICK_COUNTER_ADDR : std_logic_vector(31 downto 0) := x"20000300";
+  constant SET_CPU_KILL      : std_logic_vector(31 downto 0) := x"20000320";
   constant REQ_APP_REG       : std_logic_vector(31 downto 0) := x"20000350";
   constant ACK_APP_REG       : std_logic_vector(31 downto 0) := x"20000360";
 

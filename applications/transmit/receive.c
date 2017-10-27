@@ -165,13 +165,11 @@ volatile unsigned int glob_buff[256];
 int main() {
 	volatile char *buff;
 
-	for(;;) {
 		buff=prepare_receive(glob_buff);
 		puts("Prepared to receive\n");
 		wait_receive();
 		puts("Data Received\n");
 		puts((char*)buff);
-	}
 
 	return 0;
 }

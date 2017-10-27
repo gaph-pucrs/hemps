@@ -11,7 +11,7 @@ DUMP_MIPS         = mips-elf-objdump
 COPY_MIPS         = mips-elf-objcopy -I elf32-bigmips -O binary
 
 BOOT_TASK         = boot_task
-BOOT_TASK_SRC     = ../../software/boot_task/boot_task.asm
+BOOT_TASK_SRC     = ../../software/boot_task/boot_task.s
 
 TASK_SRC = $(wildcard *.c)
 TASK_OBJ = $(TASK_SRC:.c=.o)

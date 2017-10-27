@@ -35,12 +35,13 @@ entity dmni is
     set_op         : in  std_logic;
     start          : in  std_logic;
     set_buff       : in  std_logic;
+    set_reset_cpu  : in  std_logic;
     config_data    : in  std_logic_vector(31 downto 0);
     -- Status outputs
     intr           : out std_logic;
     send_active    : out std_logic;
     receive_active : out std_logic;
-    reset_dmni     : out std_logic;
+    reset_cpu      : out std_logic;
     recv_buff_out  : out std_logic_vector(31 downto 0);
     -- Memory interface
     mem_address    : out std_logic_vector(31 downto 0);
@@ -108,7 +109,7 @@ architecture dmni of dmni is
   signal receive_active_2  : std_logic;
   signal intr_counter_temp : std_logic_vector(3 downto 0);
 
-  signal reset_dmni_s : std_logic;
+  signal reset_cpu_r  : std_logic;
   signal payload_fix  : regflit;
   signal sizedata_fix : regflit;
   signal recv_op      : operation_type;
@@ -118,6 +119,7 @@ begin
   begin
     if reset = '1' then
       recv_buffer <= (others => '0');
+      reset_cpu   <= '1';
     elsif(clock'event and clock = '1') then
       if (set_address = '1') then
         address   <= config_data;
@@ -133,9 +135,18 @@ begin
         operation <= config_data(0);
       elsif set_buff = '1' then
         recv_buffer <= config_data;
-      elsif dmma_done = '1' then
+      elsif set_reset_cpu = '1' and config_data = x"DEADBEEF" then
+        reset_cpu <= '1';
+      end if;
+
+      if reset_cpu_r = '1' then
+        reset_cpu <= '0';
+      end if;
+
+      if dmma_done = '1' then
         recv_buffer(0) <= '1';
       end if;
+
     end if;
   end process proc_config;
 
@@ -203,7 +214,7 @@ begin
   proc_receive : process (clock, reset)
   begin
     if (reset = '1') then
-      reset_dmni_s      <= '1';
+      reset_cpu_r       <= '0';
       payload_fix       <= (others => '0');
       sizedata_fix      <= (others => '0');
       recv_op           <= LEGACY;
@@ -245,15 +256,16 @@ begin
           when DATA =>
             is_header(CONV_INTEGER(last)) <= '0';
             if(payload_size = 0) then
-              SR      <= HEADER;
-              recv_op <= LEGACY;
+              SR          <= HEADER;
+              recv_op     <= LEGACY;
+              reset_cpu_r <= '0';
             else
               payload_size <= payload_size - 1;
 
               if (payload_size = payload_fix) then
                 if (data_in = x"00000300") then  --Service 300 start_cpu
-                  reset_dmni_s <= '0';
-                  recv_op      <= START_CPU;
+                  reset_cpu_r <= '1';
+                  recv_op     <= START_CPU;
                 end if;
               end if;
               if (payload_size = payload_fix) then
@@ -356,7 +368,6 @@ begin
 
   intr_count <= intr_counter_temp;
   intr       <= '1' when intr_counter_temp > 0 else '0';
-  reset_dmni <= reset_dmni_s;
 
   proc_send : process (clock, reset)
   begin

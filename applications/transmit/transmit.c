@@ -156,5 +156,5 @@ int main() {
 
 	transmite(ROUTER_ADDR(0,1), DMA_OPERATION, (unsigned int*)hello, (sizeof(hello)+3) >> 2);
 
-	for(;;);
+	return 0;
 }

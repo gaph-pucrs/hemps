@@ -115,7 +115,8 @@ architecture structural of pe is
   signal data_av                    : std_logic;
   signal end_sim_reg                : std_logic_vector(31 downto 0);
   signal uart_write_data            : std_logic;
-  signal dmni_recv_buff                  : std_logic_vector(31 downto 0);
+  signal dmni_recv_buff             : std_logic_vector(31 downto 0);
+  signal cpu_set_reset              : std_logic;
 
   signal slack_update_timer : std_logic_vector(31 downto 0);
 
@@ -226,12 +227,13 @@ begin
       start         => cpu_start,
       config_data   => dmni_data_read,
       set_buff      => cpu_set_buff,
+      set_reset_cpu => cpu_set_reset,
 
       -- Status outputs
       intr           => ni_intr,
       send_active    => dmni_send_active_sig,
       receive_active => dmni_receive_active_sig,
-      reset_dmni     => reset_dmni,
+      reset_cpu      => reset_dmni,
       recv_buff_out  => dmni_recv_buff,
 
       -- Memory interface
@@ -298,7 +300,8 @@ begin
                                  req_app                                     when cpu_mem_address_reg = REQ_APP_REG else
                                  ZERO(31 downto 1) & dmni_send_active_sig    when cpu_mem_address_reg = DMNI_SEND_ACTIVE else
                                  ZERO(31 downto 1) & dmni_receive_active_sig when cpu_mem_address_reg = DMNI_RECEIVE_ACTIVE else
-                                 dmni_recv_buff                                   when cpu_mem_address_reg = DMNI_RECEIVE_BUFFER else
+                                 dmni_recv_buff                              when cpu_mem_address_reg = DMNI_RECEIVE_BUFFER else
+                                 LOADER_NETADDR                              when cpu_mem_address_reg = LOADER_NETADDR_REG else
                                  data_read_ram;
 
   --Comb assignments
@@ -334,6 +337,7 @@ begin
   cpu_set_op        <= '1' when cpu_mem_address_reg = DMNI_OP and write_enable = '1'             else '0';
   cpu_start         <= '1' when cpu_mem_address_reg = START_DMNI and write_enable = '1'          else '0';
   cpu_set_buff      <= '1' when cpu_mem_address_reg = DMNI_RECEIVE_BUFFER and write_enable = '1' else '0';
+  cpu_set_reset     <= '1' when cpu_mem_address_reg = SET_CPU_KILL                               else '0';
 
   write_enable <= '1' when cpu_mem_write_byte_enable_reg /= "0000" else '0';
 
