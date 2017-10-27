@@ -78,6 +78,17 @@ def get_apps_name_list(yaml_reader):
         
     return apps_name_list
 
+def get_apps_location_list(yaml_reader):
+   
+    apps_list = yaml_reader["apps"]
+
+    apps_location_list = []
+
+    for app in apps_list:
+        apps_location_list.append(app["location"])
+        
+    return apps_location_list
+
 def get_apps_number(yaml_reader):
     number = len(get_apps_name_list(yaml_reader))
     return number
@@ -88,6 +99,30 @@ def get_task_scheduler(yaml_reader):
 def get_app_repo_size(yaml_reader):
     return 1000
 
+def get_simple_soc(yaml_reader):
+    if 'simple_soc' in yaml_reader["hw"]:
+        return yaml_reader["hw"]["simple_soc"]
+    else:
+        return False
+
+def get_open_ports(yaml_reader):
+    io_list = yaml_reader["hw"]["open_port"]
+
+    open_port_list = []
+
+    for port in io_list:
+        open_port_list.append(port["port"])
+    
+    return open_port_list
+
+def get_io_number(yaml_reader):
+    number = len(get_open_ports(yaml_reader))
+    return number
+
+
+#def get_cfg_params(yaml_reader):
+#    app_names = []
+#    for app_n in yaml_reader["apps"]:
 
 #------- Repository Generation Scope ------------------- 
 #ATTENTION: STATIC MAPPING ONLY WORKS IF THE APPS START TIME ARE ORDERED

@@ -32,6 +32,8 @@ def main():
     
     #Generates the appstart.txt and appstart_debug.txt files
     generate_appstart(apps_repo_addr_list, yaml_r)
+
+    generate_cfg_file(yaml_r)
     
 
 def generate_apps_id(apps_name_list):
@@ -77,8 +79,31 @@ def generate_appstart(apps_repo_addr_list, yaml_r):
         
         
         app_start_obj.repo_address = app_address
-        
+
     generate_appstart_file(apps_start_obj_list)
+
+def generate_cfg_file(yaml_r):
+
+    cfg_file_path = "apps.cfg"
+
+    cfg_lines = []
+
+    app_list = get_apps_name_list(yaml_r)
+    location = get_apps_location_list(yaml_r)
+
+    num_apps = len(app_list)
+
+    for i in range(0,num_apps):
+        app = app_list[i]
+        x_address = location[i][0]
+        y_address = location[i][1]
+        pos = x_address << 8 | y_address
+        size = get_task_txt_size(app, app)
+        cfg_lines.append("applications/" + app + "/" + app + ".txt\n")
+        cfg_lines.append(toX(pos)+"\n")
+        cfg_lines.append(toX(size)+"\n")
+
+    writes_file_into_testcase(cfg_file_path, cfg_lines)
 
 #Function that generates a new repository from the dir: /applications
 #Please, behold this following peace of art:     

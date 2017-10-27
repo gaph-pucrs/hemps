@@ -528,7 +528,7 @@ void vhd_ram_parametrized(unsigned int* code, int count, unsigned int ram_size, 
 		        {
 		            printf("INIT_%2.2X => X\"",k);
 		            for (i = 0; i < 32; i++)
-		                printf("%2.2X",init[k][i]);
+		                printf("%2.2X", init[k][i]);
 
 		            printf("\"");
 		            if (k != 63)
@@ -705,6 +705,9 @@ int main(int argc, char* argv[]){
 				}
 				else if(strcmp(argv[3],"kernel_slave.txt") == 0){
 					vhd_ram_parametrized(code, size, i, "slave");
+				}
+				else{
+					vhd_ram_parametrized(code, size, i, "simple");
 				}
 			}
 			else if(strcmp(argv[2],"-h") == 0){

@@ -125,6 +125,9 @@ def generate_to_vhdl(is_master_list, yaml_r):
     x_mpsoc_dim =       get_mpsoc_x_dim(yaml_r)
     y_mpsoc_dim =       get_mpsoc_y_dim(yaml_r)
     app_number =        get_apps_number(yaml_r)
+    simple_soc =        get_simple_soc(yaml_r)
+    open_ports =        get_open_ports(yaml_r)
+    io_number =         get_io_number(yaml_r)
     
     
     #These lines compute the logical memory addresses used by the mlite to index the pages at the local memory
@@ -144,6 +147,26 @@ def generate_to_vhdl(is_master_list, yaml_r):
     
     #Remove the lost ',' in the string_pe_type_vhdl
     string_pe_type_vhdl = string_pe_type_vhdl[0:len(string_pe_type_vhdl)-1]
+
+    open_ports_vector = []
+    for i in range(0,x_mpsoc_dim*y_mpsoc_dim):
+        open_ports_vector.append("gnd");
+
+    for port in open_ports:
+        index = port[1]*x_mpsoc_dim + port[0]
+        if port[2] == "N":
+            open_ports_vector[index] = "nor"
+        if port[2] == "S":
+            open_ports_vector[index] = "sou"
+        if port[2] == "E":
+            open_ports_vector[index] = "eas"
+        if port[2] == "W":
+            open_ports_vector[index] = "wes"
+
+    open_ports_string = ""
+    for i in range(0,x_mpsoc_dim*y_mpsoc_dim):
+        open_ports_string = open_ports_string + "\"" + open_ports_vector[i] + "\","
+    open_ports_string = open_ports_string[0:len(open_ports_string)-1]
     
    
     file_lines = []
@@ -164,10 +187,15 @@ def generate_to_vhdl(is_master_list, yaml_r):
     file_lines.append("    constant NUMBER_PROCESSORS_X      : integer := "+str(x_mpsoc_dim)+";\n")
     file_lines.append("    constant NUMBER_PROCESSORS_Y      : integer := "+str(y_mpsoc_dim)+";\n")
     file_lines.append("    constant TAM_BUFFER               : integer := "+str(noc_buffer_size)+";\n")
-    file_lines.append("    constant NUMBER_PROCESSORS        : integer := "+str(x_mpsoc_dim*y_mpsoc_dim)+";\n\n")
+    file_lines.append("    constant NUMBER_PROCESSORS        : integer := "+str(x_mpsoc_dim*y_mpsoc_dim)+";\n")
+    file_lines.append("    constant SIMPLE_SOC               : boolean := "+str(simple_soc)+";\n")
+    file_lines.append("    constant IO_NUMBER                : integer := "+str(io_number)+";\n\n")
     file_lines.append("    subtype kernel_str is string(1 to 3);\n")
     file_lines.append("    type pe_type_t is array(0 to NUMBER_PROCESSORS-1) of kernel_str;\n")
     file_lines.append("    constant pe_type : pe_type_t := ("+string_pe_type_vhdl+");\n\n")
+    file_lines.append("    subtype manual_io_option is string(1 to 3);\n")
+    file_lines.append("    type manual_io_type is array(0 to NUMBER_PROCESSORS-1) of manual_io_option;\n")
+    file_lines.append("    constant OPEN_IO : manual_io_type := ("+open_ports_string+");\n\n")
     file_lines.append("end hemps_pkg;\n")
     
     #Use this function to create any file into testcase, it automatically only updates the old file if necessary

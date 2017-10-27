@@ -22,6 +22,7 @@ entity pe is
       log_file       : string        := "output.txt";
       router_address : regmetadeflit := (others => '0');
       kernel_type    : kernel_str;
+      simple_soc     : boolean;
       manual_NORTH   : boolean       := false;
       manual_SOUTH   : boolean       := false;
       manual_EAST    : boolean       := false;
@@ -127,39 +128,21 @@ begin
 -----------------------------------------------------------------------------------
 -- PE COMPONENTS INSTANTIATION
 -----------------------------------------------------------------------------------
-  mastercpu : if kernel_type = "mas" generate  --Distincao da CPU para Mestre
-    cpu : entity work.mlite_cpu
-      port map(
-        clk          => clock_hold_s,
-        reset_in     => reset,
-        intr_in      => irq,
-        mem_address  => cpu_mem_address,
-        mem_data_w   => cpu_mem_data_write,
-        mem_data_r   => cpu_mem_data_read,
-        mem_byte_we  => cpu_mem_write_byte_enable,
-        mem_pause    => cpu_mem_pause,
-        current_page => current_page
-        );
-  end generate;
+  cpu : entity work.mlite_cpu
+    port map(
+      clk          => clock_hold_s,
+      reset_in     => reset_dmni,
+      intr_in      => irq,
+      mem_address  => cpu_mem_address,
+      mem_data_w   => cpu_mem_data_write,
+      mem_data_r   => cpu_mem_data_read,
+      mem_byte_we  => cpu_mem_write_byte_enable,
+      mem_pause    => cpu_mem_pause,
+      current_page => current_page
+      );
 
 
-  slavecpu : if kernel_type = "sla" generate  --Distincao da CPU para Escravo
-    cpu : entity work.mlite_cpu
-      port map(
-        clk          => clock_hold_s,
-        reset_in     => reset_dmni,
-        intr_in      => irq,
-        mem_address  => cpu_mem_address,
-        mem_data_w   => cpu_mem_data_write,
-        mem_data_r   => cpu_mem_data_read,
-        mem_byte_we  => cpu_mem_write_byte_enable,
-        mem_pause    => cpu_mem_pause,
-        current_page => current_page
-        );
-  end generate;
-
-
-  master : if kernel_type = "mas" generate
+  master : if kernel_type = "mas" and simple_soc = false generate
     mem : entity work.ram_master
       port map(
         clk          => clock,
@@ -176,8 +159,25 @@ begin
         );
   end generate;
 
-  slave : if kernel_type = "sla" generate
+  slave : if kernel_type = "sla" and simple_soc = false generate
     mem : entity work.ram_slave
+      port map(
+        clk          => clock,
+        enable_a     => cpu_enable_ram,
+        wbe_a        => cpu_mem_write_byte_enable,
+        address_a    => addr_a,
+        data_write_a => cpu_mem_data_write,
+        data_read_a  => data_read_ram,
+        enable_b     => dmni_enable_internal_ram,
+        wbe_b        => dmni_mem_write_byte_enable,
+        address_b    => addr_b,
+        data_write_b => dmni_mem_data_write,
+        data_read_b  => mem_data_read
+        );
+  end generate;
+
+  simple_soc_ram : if simple_soc = true generate
+    mem : entity work.ram_simple
       port map(
         clk          => clock,
         enable_a     => cpu_enable_ram,

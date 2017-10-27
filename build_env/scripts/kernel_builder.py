@@ -190,6 +190,9 @@ def generate_memory( yaml_r ):
         ext_slave  = os.system("cd software; ram_generator " + str(gen_compatible_mem_size) + " -rtl kernel_slave.txt > ../ram_pe/ram_slave.vhd")
         
         ext_master = os.system("cd software; ram_generator " + str(gen_compatible_mem_size) + " -rtl kernel_master.txt > ../ram_pe/ram_master.vhd")
+
+        os.system("cd software; echo 00000000 > ram_simple.txt");
+        os.system("cd software; ram_generator " + str(gen_compatible_mem_size) + " -rtl ram_simple.txt > ../ram_pe/ram_simple.vhd")
         
         if ext_master != 0 or ext_slave != 0 or gen_compatible_mem_size == 0:
             sys.exit("ERROR: Error in the ram_generation process")

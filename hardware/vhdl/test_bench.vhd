@@ -21,264 +21,229 @@ use std.textio.all;
 use work.hemps_pkg.all;
 use work.standards.all;
 
---! @file
---! @ingroup vhdl_group
---! @{
---! @}
-
---! @brief entity brief description
- 
---! @detailed detailed description
 entity test_bench is
-        
-        --constant	log_file            : string := "output_master.txt"; --! port description
-        constant	mlite_description   : string := "RTL";
-     	constant	ram_description     : string := "RTL";
-     	constant	router_description  : string := "RTL";
-        
-        constant	REPO_SIZE: integer := (TOTAL_REPO_SIZE_BYTES/4); --This math is because each repoline is 32 bits word
-   		constant	APPSTART_SIZE: integer := (APP_NUMBER*2)+1; --THis math is because the appstart file have two values per app plus one end of file mark 
-        type repo_type is array(REPO_SIZE-1 downto 0) of std_logic_vector(31 downto 0);
-        type appstart_type is array(APPSTART_SIZE-1 downto 0) of std_logic_vector(31 downto 0);
-        
-        
-        impure function load_repo (repo_file : in string) return repo_type is
-	        
-	        file file_ptr		: text open read_mode is repo_file;
-  			variable inline    : line;
-  			variable i         : integer := 0;
-  			
-  			variable mem : repo_type := (others => (others => '0'));
-	        
-  		begin
-  			
-  			while not endfile(file_ptr) loop 
-  				
-  				if (i = REPO_SIZE) then
-	  		    	assert false report "ERROR: reposiotory access overflow - i= " & integer'image(i)
-	  		    	severity error;
-	  		    end if;
-	  		    
-	  		    readline(file_ptr, inline);
-  				hread(inline, mem(i));
-  				i := i + 1;
-  				
-  			end loop;
-			
-			file_close(file_ptr);
-			
-        	return mem;
-        	
-    	end load_repo; 
 
-    	
-    	impure function load_appstart (appstart_file : in string) return appstart_type is
-	        
-	        file file_ptr2		: text open read_mode is appstart_file;
-  			variable inline    : line;
-  			variable i         : integer := 0;
-  			
-  			variable mem : appstart_type := (others => (others => '0'));
-	        
-  		begin
-  			
-  			while not endfile(file_ptr2) loop 
-  				
-  				if (i = REPO_SIZE) then
-	  		    	assert false report "ERROR: appstart access overflow - i= " & integer'image(i)
-	  		    	severity error;
-	  		    end if;
-	  		    
-	  		    readline(file_ptr2, inline);
-  				hread(inline, mem(i));
-  				i := i + 1;
-  				
-  			end loop;
-			
-			file_close(file_ptr2);
-			
-        	return mem;
-        	
-    	end load_appstart; 
-    	
-        
+  type config is record
+    code_name : string(1 to 34);
+    position  : std_logic_vector(31 downto 0);
+    code_size : std_logic_vector(31 downto 0);
+  end record;
+
+  type list_of_apps is array(0 to APP_NUMBER-1) of config;
+
+  --constant  log_file          : string := "output_master.txt"; --! port description
+  constant mlite_description  : string := "RTL";
+  constant ram_description    : string := "RTL";
+  constant router_description : string := "RTL";
+
+  constant REPO_SIZE     : integer := (TOTAL_REPO_SIZE_BYTES/4);  --This math is because each repoline is 32 bits word
+  constant TAM_PACKSTART : integer := 13;
+
+  type repo_type is array(REPO_SIZE-1 downto 0) of std_logic_vector(31 downto 0);
+
+  impure function load_repo (repo_file : in string) return repo_type is
+    file file_ptr   : text open read_mode is repo_file;
+    variable inline : line;
+    variable i      : integer := 0;
+
+    variable mem : repo_type := (others => (others => '0'));
+
+  begin
+    while not endfile(file_ptr) loop
+      if (i = REPO_SIZE) then
+        assert false report "ERROR: reposiotory access overflow - i= " & integer'image(i)
+          severity error;
+      end if;
+
+      readline(file_ptr, inline);
+      hread(inline, mem(i));
+      i := i + 1;
+    end loop;
+
+    file_close(file_ptr);
+    return mem;
+  end load_repo;
+
+  impure function get_cfg (cfg_file : in string) return list_of_apps is
+
+    file file_ptr    : text open read_mode is cfg_file;
+    variable inline  : line;
+    variable strline : string(1 to 34);
+    variable cfg     : list_of_apps;
+  begin
+
+    for i in 0 to APP_NUMBER-1 loop
+      readline(file_ptr, inline);
+      read(inline, strline(1 to inline'length));
+      cfg(i).code_name := strline;
+      readline(file_ptr, inline);
+      hread(inline, cfg(i).position);
+      readline(file_ptr, inline);
+      hread(inline, cfg(i).code_size);
+    end loop;
+    file_close(file_ptr);
+    return cfg;
+  end get_cfg;
+
 end;
 
 architecture test_bench of test_bench is
-	
-	
-        signal clock                      : std_logic := '0';
-        signal clock_200                  : std_logic := '1';
-        signal reset                      : std_logic;
---        signal control_write_enable_debug : std_logic;
---        signal control_data_out_debug     : std_logic_vector(31 downto 0);
---        signal control_busy_debug         : std_logic;
-        signal control_hemps_addr         : std_logic_vector(29 downto 0);
-        signal control_hemps_data         : std_logic_vector(31 downto 0);
-        
-        type state is (LER, WAIT_DDR, WR_HEMPS, START);
-        signal EA : state;
-        type state2 is (S0, S1);
-        
-        signal CS           : state2;
-        signal counter      : integer       := 0;
-        signal ack_app      : std_logic;
-        signal req_app      : std_logic_vector(31 downto 0);
-        
-        constant repository : repo_type     := load_repo("repository.txt");
-        constant appstart   : appstart_type := load_appstart("appstart.txt");
-        
-        
-		signal current_time      : integer := 0;
-		signal app_i             : integer := 0;
-		
+
+  signal clock     : std_logic := '0';
+  signal clock_200 : std_logic := '1';
+  signal reset     : std_logic;
+
+  constant app_cfg : list_of_apps := get_cfg("apps.cfg");
+
+  signal current_time : integer := 0;
+  signal app_i        : integer := 0;
+
+  --NoC Interface (IO)
+  signal tx_io       : std_logic_vector((IO_NUMBER-1) downto 0);
+  signal data_out_io : arrayNio_regflit;
+  signal credit_i_io : std_logic_vector((IO_NUMBER-1) downto 0);
+  signal clock_tx_io : std_logic_vector((IO_NUMBER-1) downto 0);
+  signal rx_io       : std_logic_vector((IO_NUMBER-1) downto 0);
+  signal data_in_io  : arrayNio_regflit;
+  signal credit_o_io : std_logic_vector((IO_NUMBER-1) downto 0);
+  signal clock_rx_io : std_logic_vector((IO_NUMBER-1) downto 0);
+
+  --Leitura para IO
+  signal rd_addr           : std_logic_vector(23 downto 0);
+  signal flit_counter      : integer;
+  signal file_counter      : integer;
+  signal packstart_counter : integer;
+  type packstart_type is array(0 to TAM_PACKSTART-1) of regflit;
+  signal packstart_data    : packstart_type;
+  signal app_code          : repo_type;
+
 begin
 
-   --
-   --  HeMPS instantiation 
-   --
-   	HeMPS : entity work.HeMPS
-	generic map(
-		mlite_description  => mlite_description,
-		ram_description    => ram_description,
-		router_description => router_description
-	)
-	port map(
-		clock => clock,
-		reset => reset,
-		--repository
-		repo_address => control_hemps_addr,
-		repo_data => control_hemps_data,
-		ack_app => ack_app,
-		req_app => req_app
-	--debug
-	--		write_enable_debug => control_write_enable_debug,
-	--		data_out_debug     => control_data_out_debug,
-	--		busy_debug         => control_busy_debug,
-			
-	);
-	   
-	   
-	   
-	reset     <= '1', '0' after 100 ns;
-	-- 100 MHz
-	clock     <= not clock after 5 ns;
-	-- 200 MHz
-	clock_200 <= not clock_200 after 1.25 ns;
-	
-	--Repository data assignment
-	control_hemps_data <= repository(CONV_INTEGER(control_hemps_addr(23 downto 0)) / 4);
-       
--- App request control
+  --packstart_data(12) <= x"00000101";
+  packstart_data(11) <= x"0000000B";
+  packstart_data(10) <= x"00000300";
+  packstart_data(9)  <= x"00000000";
+  packstart_data(8)  <= x"00000000";
+  packstart_data(7)  <= x"00000000";
+  packstart_data(6)  <= x"00000000";
+  packstart_data(5)  <= x"00000000";
+  packstart_data(4)  <= x"00000000";
+  packstart_data(3)  <= x"00000000";
+  packstart_data(2)  <= x"00000000";
+  packstart_data(1)  <= x"00000000";
+  packstart_data(0)  <= x"00000000";
 
-	process (clock, reset)
-		variable app_repo_address  : integer := 0;
-		variable app_start_time_ms : integer := 0;
-    begin
-    	
-    	if reset = '1' then
-    		
-    		req_app <= (others => '0');
-    		app_i <= 0;
-    		current_time <= 0;
-    	
-    	elsif rising_edge(clock) then
-    		
-    		current_time <= current_time + 1;
-    		
-    		if req_app = x"00000000" then
-    	
-	    		if appstart(app_i) /= x"deadc0de" then
-	    		
-		    		app_repo_address := conv_integer(appstart(app_i));
-		    		app_start_time_ms := conv_integer(appstart(app_i+1));
-		    		
-		    		if (app_start_time_ms * 100000) <= current_time then
-		    			
-		    			req_app <= CONV_STD_LOGIC_VECTOR(app_repo_address, 32) or x"80000000"; 
-		    			
-		    			assert false report "Repository requesting app "& integer'image(app_i/2)
-	  		    		severity note;
+  --
+  --  HeMPS instantiation 
+  --
+  HeMPS : entity work.HeMPS
+    generic map(
+      mlite_description  => mlite_description,
+      ram_description    => ram_description,
+      router_description => router_description
+      )
+    port map(
+      clock        => clock,
+      reset        => reset,
+      --repository
+      repo_address => open,
+      repo_data    => (others => '0'),
+      ack_app      => open,
+      req_app      => (others => '0'),
 
-		    			app_i <= app_i+2;
-		    			
-		    		end if;
-	    		end if;
-	    	elsif ack_app = '1' then
-	    		req_app <= (others => '0');
-	    	end if;
-    			
-    	end if;
-    		
-    end process;
-        
-     --
-     -- creates the output file. This code was not removed because it can be useful in a protipation. In fact, all debug traces all only commented in testbench, hemps, pe
-     --
---     process(control_write_enable_debug,reset)
---       file store_file : text open write_mode is log_file;
---       variable file_line : line;
---       variable line_type: character;
---       variable line_length : natural := 0;
---       variable str: string (1 to 4);
---       variable str_end: boolean;
---     begin
---        if reset = '1' then
---                str_end := false;
---                CS <= S0;      
---        elsif rising_edge(control_write_enable_debug) then
---                case CS is
---                  when S0 =>
---                          -- Reads the incoming string
---                          line_type := character'val(conv_integer(control_data_out_debug(7 downto 0)));
---                          
---                          -- Verifies if the string is from Echo()
---                          if line_type = '$' then 
---                                  write(file_line, line_type);
---                                  line_length := line_length + 1;
---                                  CS <= S1;
---                          
---                          -- Writes the string to the file
---                          else                                                                    
---                                  str(4) := character'val(conv_integer(control_data_out_debug(7 downto 0)));
---                                  str(3) := character'val(conv_integer(control_data_out_debug(15 downto 8)));
---                                  str(2) := character'val(conv_integer(control_data_out_debug(23 downto 16)));
---                                  str(1) := character'val(conv_integer(control_data_out_debug(31 downto 24)));
---                                  
---                                  str_end := false;
---                                  
---                                  for i in 1 to 4 loop                                                            
---                                          -- Writes a string in the line
---                                          if str(i) /= lf and str(i) /= nul and not str_end then
---                                                  write(file_line, str(i));
---                                                  line_length := line_length + 1;
---                                  
---                                          -- Detects the string end
---                                          elsif str(i) = nul then
---                                                  str_end := true;
---                                          
---                                          -- Line feed detected. Writes the line in the file
---                                          elsif str(i) = lf then                                                              
---                                                  writeline(store_file, file_line);
---                                                  line_length := 0;
---                                          end if;
---                                  end loop;
---                          end if;
---                                                                  
---                  -- Receives from plasma the source processor, source task and writes them to the file
---                  when S1 =>
---                          write(file_line, ',');
---                          write(file_line, conv_integer(control_data_out_debug(7 downto 0)));                                                             
---                          line_length := line_length + 1;
---                          
---                          if line_length = 3 then 
---                                  write(file_line, ',');
---                                  CS <= S0;
---                          else
---                                  CS <= S1;
---                          end if;
---               end case;
---        end if;
---      end process;
+      --NoC Interface (IO)
+      tx_io       => tx_io,
+      data_out_io => data_out_io,
+      credit_i_io => credit_i_io,
+      clock_tx_io => clock_tx_io,
+      rx_io       => rx_io,
+      data_in_io  => data_in_io,
+      credit_o_io => credit_o_io,
+      clock_rx_io => clock_rx_io
+      );
+
+  --data_injector : entity work.inject_data
+  --generic map (
+  --  router_nb => 1,
+  --  port_name => "IO"
+  --)
+  --port map (
+  --  clock    => clock,
+  --  reset    => reset,
+  --  clock_rx => clock_rx_io,
+  --  rx       => rx_io,
+  -- data_in  => data_in_io,
+  -- credit_o => credit_o_io
+  --);
+
+  data_consumer : entity work.receive_data
+    generic map (
+      router_nb => 1,
+      port_name => "IO"
+      )
+    port map (
+      clock    => clock,
+      reset    => reset,
+      clock_tx => clock_tx_io(0),
+      tx       => tx_io(0),
+      data_out => data_out_io(0),
+      credit_i => credit_i_io(0)
+      );
+
+
+  reset     <= '1', '0'      after 100 ns;
+  -- 100 MHz
+  clock     <= not clock     after 5 ns;
+  -- 200 MHz
+  clock_200 <= not clock_200 after 1.25 ns;
+
+  --Conecta o testbench inicialmente no IO 0
+  clock_rx_io(0) <= clock;
+  process (clock, reset)
+  begin
+    if reset = '1' then
+      rx_io(0)          <= '0';
+      rd_addr           <= (others => '0');
+      flit_counter      <= 0;
+      packstart_counter <= 0;
+      file_counter      <= 0;
+    elsif rising_edge(clock) then
+      if credit_o_io(0) = '1' then
+        if flit_counter > 0 then
+          rx_io(0) <= '1';
+          rd_addr  <= rd_addr + 1;
+          if rd_addr = 0 then
+            data_in_io(0) <= app_cfg(file_counter).position;
+          elsif rd_addr = 1 then
+            data_in_io(0) <= app_cfg(file_counter).code_size;
+            file_counter  <= file_counter + 1;
+          elsif rd_addr = 2 then
+            data_in_io(0) <= x"00000290";
+          else
+            data_in_io(0) <= app_code(CONV_INTEGER(rd_addr-3));
+            flit_counter  <= flit_counter - 1;
+          end if;
+        else
+          if(file_counter > 0 and packstart_counter > 0) then
+            rx_io(0)          <= '1';
+            packstart_counter <= packstart_counter - 1;
+            data_in_io(0)     <= packstart_data(packstart_counter-1);
+          else
+            rx_io(0) <= '0';
+            rd_addr  <= (others => '0');
+            if file_counter < APP_NUMBER then
+              app_code                        <= load_repo(app_cfg(file_counter).code_name);
+              flit_counter                    <= CONV_INTEGER(app_cfg(file_counter).code_size);
+              packstart_counter               <= TAM_PACKSTART;
+              packstart_data(TAM_PACKSTART-1) <= app_cfg(file_counter).position;
+            end if;
+          end if;
+        end if;
+      end if;
+    end if;
+  end process;
 
 end test_bench;
+
+
+

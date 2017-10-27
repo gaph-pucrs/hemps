@@ -114,6 +114,10 @@ begin
     file_open(fstatus, file_in, "in" & integer'image(router_nb) & port_name & ".txt", read_mode);
 
     if fstatus = open_ok then
+
+      assert false report "Reading file in"& integer'image(router_nb) & port_name & ".txt"
+                severity note;
+
       while not (endfile(file_in)) loop  -- one packet per line -----
 
         readline(file_in, ARQ_LINE);
@@ -142,6 +146,9 @@ begin
         wait for 2 ps;                  --required, to wait the next line :-)
 
       end loop;  -- end loop da linha
+    else
+      assert false report "Could not open in"& integer'image(router_nb) & port_name & ".txt"
+                severity note;
     end if;
 
   end process;

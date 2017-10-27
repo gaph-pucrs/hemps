@@ -28,7 +28,17 @@ entity HeMPS is                         -- Interface com o ambiente exterior
     repo_address : out std_logic_vector(29 downto 0);
     repo_data    : in  std_logic_vector(31 downto 0);
     ack_app      : out std_logic;
-    req_app      : in  std_logic_vector(31 downto 0)
+    req_app      : in  std_logic_vector(31 downto 0);
+
+    --NoC Interface (IO)
+    tx_io       : out std_logic_vector((IO_NUMBER-1) downto 0);
+    data_out_io : out arrayNio_regflit;
+    credit_i_io : in  std_logic_vector((IO_NUMBER-1) downto 0);
+    clock_tx_io : out std_logic_vector((IO_NUMBER-1) downto 0);
+    rx_io       : in  std_logic_vector((IO_NUMBER-1) downto 0);
+    data_in_io  : in  arrayNio_regflit;
+    credit_o_io : out std_logic_vector((IO_NUMBER-1) downto 0);
+    clock_rx_io : in  std_logic_vector((IO_NUMBER-1) downto 0)
 
     -- External Debug interface
 --          write_enable_debug : out std_logic;
@@ -81,10 +91,11 @@ begin
         router_address => RouterAddress(i),
         kernel_type    => pe_type(i),
         log_file       => log_filename(i),
-        manual_EAST    => ManualEASTByPos(i),
-        manual_WEST    => ManualWESTByPos(i),
-        manual_NORTH   => ManualNORTHByPos(i),
-        manual_SOUTH   => ManualSOUTHByPos(i))
+        simple_soc     => SIMPLE_SOC,
+        manual_NORTH   => ManualNORTHbyPos(i),
+        manual_SOUTH   => ManualSOUTHbyPos(i),
+        manual_EAST    => ManualEASTbyPos(i),
+        manual_WEST    => ManualWESTbyPos(i))
       port map(
         clock          => clock,
         reset          => reset,
@@ -112,14 +123,14 @@ begin
     ------------------------------------------------------------------------------
     --- REPOSITORY CONNECTIONS ----------------------------------------------------
     ------------------------------------------------------------------------------
-    repo_mas : if pe_type(i) = "mas" generate  -- Caso o PE for mestre
+    repo_mas : if RouterPosition(i) = BL generate
       repo_address     <= repo_address_sig(i);
       repo_data_sig(i) <= repo_data;
       ack_app          <= ack_app_sig(i);
       req_app_sig(i)   <= req_app;
     end generate;
 
-    ground_repo : if pe_type(i) /= "mas" generate  --Caso o PE nao for mestre
+    ground_repo : if RouterPosition(i) /= BL generate
       repo_address_sig(i) <= (others => '0');
       repo_data_sig(i)    <= (others => '0');
       ack_app_sig(i)      <= '0';
@@ -149,26 +160,21 @@ begin
     ------------------------------------------------------------------------------
     --- EAST PORT CONNECTIONS ----------------------------------------------------
     ------------------------------------------------------------------------------
-    east_border : if RouterPosition(i) = BR or RouterPosition(i) = CRX or RouterPosition(i) = TR generate
-      data_injector : entity work.inject_data
-        generic map(router_nb => i,
-                    port_name => "EAST")
-        port map (clock    => clock,
-                  reset    => reset,
-                  clock_rx => clock_rx(i)(EAST),
-                  rx       => rx(i)(EAST),
-                  data_in  => data_in(i)(EAST),
-                  credit_o => credit_o(i)(EAST));
-
-      data_consumer : entity work.receive_data
-        generic map(router_nb => i,
-                    port_name => "EAST")
-        port map(clock    => clock,
-                 reset    => reset,
-                 clock_tx => clock_tx(i)(EAST),
-                 tx       => tx(i)(EAST),
-                 data_out => data_out(i)(EAST),
-                 credit_i => credit_i(i)(EAST));
+    east_io : if OPEN_IO(i) = "eas" generate
+      rx(i)(EAST)              <= rx_io(io_index(i));
+      clock_rx(i)(EAST)        <= clock_rx_io(io_index(i));
+      credit_i(i)(EAST)        <= credit_i_io(io_index(i));
+      data_in(i)(EAST)         <= data_in_io(io_index(i));
+      tx_io(io_index(i))       <= tx(i)(EAST);
+      clock_tx_io(io_index(i)) <= clock_tx(i)(EAST);
+      credit_o_io(io_index(i)) <= credit_o(i)(EAST);
+      data_out_io(io_index(i)) <= data_out(i)(EAST);
+    end generate;
+    east_grounding : if OPEN_IO(i) = "gnd" and (RouterPosition(i) = BR or RouterPosition(i) = CRX or RouterPosition(i) = TR) generate
+      rx(i)(EAST)       <= '0';
+      clock_rx(i)(EAST) <= '0';
+      credit_i(i)(EAST) <= '0';
+      data_in(i)(EAST)  <= (others => '0');
     end generate;
 
     east_connection : if RouterPosition(i) = BL or RouterPosition(i) = CL or RouterPosition(i) = TL or RouterPosition(i) = BC or RouterPosition(i) = TC or RouterPosition(i) = CC generate
@@ -181,26 +187,21 @@ begin
     ------------------------------------------------------------------------------
     --- WEST PORT CONNECTIONS ----------------------------------------------------
     ------------------------------------------------------------------------------
-    west_border : if RouterPosition(i) = BL or RouterPosition(i) = CL or RouterPosition(i) = TL generate
-      data_injector : entity work.inject_data
-        generic map(router_nb => i,
-                    port_name => "WEST")
-        port map (clock    => clock,
-                  reset    => reset,
-                  clock_rx => clock_rx(i)(WEST),
-                  rx       => rx(i)(WEST),
-                  data_in  => data_in(i)(WEST),
-                  credit_o => credit_o(i)(WEST));
-
-      data_consumer : entity work.receive_data
-        generic map(router_nb => i,
-                    port_name => "WEST")
-        port map(clock    => clock,
-                 reset    => reset,
-                 clock_tx => clock_tx(i)(WEST),
-                 tx       => tx(i)(WEST),
-                 data_out => data_out(i)(WEST),
-                 credit_i => credit_i(i)(WEST));
+    west_io : if OPEN_IO(i) = "wes" generate
+      rx(i)(WEST)              <= rx_io(io_index(i));
+      clock_rx(i)(WEST)        <= clock_rx_io(io_index(i));
+      credit_i(i)(WEST)        <= credit_i_io(io_index(i));
+      data_in(i)(WEST)         <= data_in_io(io_index(i));
+      tx_io(io_index(i))       <= tx(i)(WEST);
+      clock_tx_io(io_index(i)) <= clock_tx(i)(WEST);
+      credit_o_io(io_index(i)) <= credit_o(i)(WEST);
+      data_out_io(io_index(i)) <= data_out(i)(WEST);
+    end generate;
+    west_grounding : if OPEN_IO(i) = "gnd" and (RouterPosition(i) = BL or RouterPosition(i) = CL or RouterPosition(i) = TL) generate
+      rx(i)(WEST)       <= '0';
+      clock_rx(i)(WEST) <= '0';
+      credit_i(i)(WEST) <= '0';
+      data_in(i)(WEST)  <= (others => '0');
     end generate;
 
     west_connection : if (RouterPosition(i) = BR or RouterPosition(i) = CRX or RouterPosition(i) = TR or RouterPosition(i) = BC or RouterPosition(i) = TC or RouterPosition(i) = CC) generate
@@ -213,26 +214,21 @@ begin
     -------------------------------------------------------------------------------
     --- NORTH PORT CONNECTIONS ----------------------------------------------------
     -------------------------------------------------------------------------------
-    north_border : if RouterPosition(i) = TL or RouterPosition(i) = TC or RouterPosition(i) = TR generate
-      data_injector : entity work.inject_data
-        generic map(router_nb => i,
-                    port_name => "NORTH")
-        port map (clock    => clock,
-                  reset    => reset,
-                  clock_rx => clock_rx(i)(NORTH),
-                  rx       => rx(i)(NORTH),
-                  data_in  => data_in(i)(NORTH),
-                  credit_o => credit_o(i)(NORTH));
-
-      data_consumer : entity work.receive_data
-        generic map(router_nb => i,
-                    port_name => "NORTH")
-        port map(clock    => clock,
-                 reset    => reset,
-                 clock_tx => clock_tx(i)(NORTH),
-                 tx       => tx(i)(NORTH),
-                 data_out => data_out(i)(NORTH),
-                 credit_i => credit_i(i)(NORTH));
+    north_io : if OPEN_IO(i) = "nor" generate
+      rx(i)(NORTH)             <= rx_io(io_index(i));
+      clock_rx(i)(NORTH)       <= clock_rx_io(io_index(i));
+      credit_i(i)(NORTH)       <= credit_i_io(io_index(i));
+      data_in(i)(NORTH)        <= data_in_io(io_index(i));
+      tx_io(io_index(i))       <= tx(i)(NORTH);
+      clock_tx_io(io_index(i)) <= clock_tx(i)(NORTH);
+      credit_o_io(io_index(i)) <= credit_o(i)(NORTH);
+      data_out_io(io_index(i)) <= data_out(i)(NORTH);
+    end generate;
+    north_grounding : if OPEN_IO(i) = "gnd" and (RouterPosition(i) = TL or RouterPosition(i) = TC or RouterPosition(i) = TR) generate
+      rx(i)(NORTH)       <= '0';
+      clock_rx(i)(NORTH) <= '0';
+      credit_i(i)(NORTH) <= '0';
+      data_in(i)(NORTH)  <= (others => '0');
     end generate;
 
     north_connection : if RouterPosition(i) = BL or RouterPosition(i) = BC or RouterPosition(i) = BR or RouterPosition(i) = CL or RouterPosition(i) = CRX or RouterPosition(i) = CC generate
@@ -245,26 +241,21 @@ begin
     --------------------------------------------------------------------------------
     --- SOUTH PORT CONNECTIONS -----------------------------------------------------
     ---------------------------------------------------------------------------
-    south_border : if RouterPosition(i) = BL or RouterPosition(i) = BC or RouterPosition(i) = BR generate
-      data_injector : entity work.inject_data
-        generic map(router_nb => i,
-                    port_name => "SOUTH")
-        port map (clock    => clock,
-                  reset    => reset,
-                  clock_rx => clock_rx(i)(SOUTH),
-                  rx       => rx(i)(SOUTH),
-                  data_in  => data_in(i)(SOUTH),
-                  credit_o => credit_o(i)(SOUTH));
-
-      data_consumer : entity work.receive_data
-        generic map(router_nb => i,
-                    port_name => "SOUTH")
-        port map(clock    => clock,
-                 reset    => reset,
-                 clock_tx => clock_tx(i)(SOUTH),
-                 tx       => tx(i)(SOUTH),
-                 data_out => data_out(i)(SOUTH),
-                 credit_i => credit_i(i)(SOUTH));
+    south_io : if OPEN_IO(i) = "sou" generate
+      rx(i)(SOUTH)             <= rx_io(io_index(i));
+      clock_rx(i)(SOUTH)       <= clock_rx_io(io_index(i));
+      credit_i(i)(SOUTH)       <= credit_i_io(io_index(i));
+      data_in(i)(SOUTH)        <= data_in_io(io_index(i));
+      tx_io(io_index(i))       <= tx(i)(SOUTH);
+      clock_tx_io(io_index(i)) <= clock_tx(i)(SOUTH);
+      credit_o_io(io_index(i)) <= credit_o(i)(SOUTH);
+      data_out_io(io_index(i)) <= data_out(i)(SOUTH);
+    end generate;
+    south_grounding : if OPEN_IO(i) = "gnd" and (RouterPosition(i) = BL or RouterPosition(i) = BC or RouterPosition(i) = BR) generate
+      rx(i)(SOUTH)       <= '0';
+      clock_rx(i)(SOUTH) <= '0';
+      credit_i(i)(SOUTH) <= '0';
+      data_in(i)(SOUTH)  <= (others => '0');
     end generate;
 
     south_connection : if RouterPosition(i) = TL or RouterPosition(i) = TC or RouterPosition(i) = TR or RouterPosition(i) = CL or RouterPosition(i) = CRX or RouterPosition(i) = CC generate

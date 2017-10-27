@@ -8,10 +8,10 @@ COMP =vcom -work $(LIB)
 #VHDL files
 HEMPS_PKG	=hemps_pkg
 STAND		=standards
-TOP 		=receive_data inject_data hemps test_bench
+TOP 		=hemps receive_data inject_data test_bench
 PE	 		=pe
 DMNI 		=dmni
-MEMORY 		=ram_master ram_slave
+MEMORY 		=ram_master ram_slave ram_simple
 PROCESSOR 	=mlite_pack UartFile alu bus_mux control mem_ctrl mult pc_next pipeline reg_bank shifter mlite_cpu
 ROUTER	 	=Hermes_buffer Hermes_crossbar Hermes_switchcontrol RouterCC
 

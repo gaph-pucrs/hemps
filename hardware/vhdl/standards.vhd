@@ -153,6 +153,7 @@ package standards is
   type arrayNrot_regmetadeflit is array((NROT-1) downto 0) of regmetadeflit;
   type arrayNPe_reg32 is array((NUMBER_PROCESSORS -1) downto 0) of reg32;
   type arrayNPe_reg30 is array((NUMBER_PROCESSORS -1) downto 0) of reg30;
+  type arrayNio_regflit is array((IO_NUMBER-1) downto 0) of regflit;
 
   -- number of ports of the processing_element - 4 - north/south/west/east
   type arrayNPORT_1_regflit is array(3 downto 0) of regflit;
@@ -173,13 +174,14 @@ package standards is
 ---------------------------------------------------------
   function RouterPosition(router : integer) return integer;
   function RouterAddress(router  : integer) return std_logic_vector;
+  function log_filename(i        : integer) return string;
 
-  function ManualEASTByPos(router  : integer) return boolean;
-  function ManualWESTByPos(router  : integer) return boolean;
-  function ManualNORTHByPos(router : integer) return boolean;
-  function ManualSOUTHByPos(router : integer) return boolean;
+  function ManualNORTHbyPos(router : integer) return boolean;
+  function ManualSOUTHbyPos(router : integer) return boolean;
+  function ManualEASTbyPos(router  : integer) return boolean;
+  function ManualWESTbyPos(router  : integer) return boolean;
 
-  function log_filename(i : integer) return string;
+  function io_index(router : integer) return integer;
 
 end standards;
 
@@ -348,51 +350,6 @@ begin
 
 end RouterPosition;
 
-function ManualWESTbyPos(router : integer) return boolean is
-  variable pos : integer;
-begin
-  pos := RouterPosition(router);
-  if (pos = TL) or (pos = CL) or (pos = BL) then
-    return true;
-  else
-    return false;
-  end if;
-end ManualWESTbyPos;
-
-function ManualEASTbyPos(router : integer) return boolean is
-  variable pos : integer;
-begin
-  pos := RouterPosition(router);
-  if (pos = TR) or (pos = CRX) or (pos = BR) then
-    return true;
-  else
-    return false;
-  end if;
-end ManualEASTbyPos;
-
-function ManualNORTHbyPos(router : integer) return boolean is
-  variable pos : integer;
-begin
-  pos := RouterPosition(router);
-  if (pos = TL) or (pos = TC) or (pos = TR) then
-    return true;
-  else
-    return false;
-  end if;
-end ManualNORTHbyPos;
-
-function ManualSOUTHbyPos(router : integer) return boolean is
-  variable pos : integer;
-begin
-  pos := RouterPosition(router);
-  if (pos = BL) or (pos = BC) or (pos = BR) then
-    return true;
-  else
-    return false;
-  end if;
-end ManualSOUTHbyPos;
-
-
 function RouterAddress(router : integer) return std_logic_vector is
   variable pos_x, pos_y : regquartoflit;
   variable addr         : regmetadeflit;
@@ -416,5 +373,54 @@ begin
   filename := "log/log" & CONV_HEX(aux_x) & "x" & CONV_HEX(aux_y) & ".txt";
   return filename;
 end log_filename;
+
+function ManualNORTHbyPos(router : integer) return boolean is
+begin
+  if (OPEN_IO(router) = "nor") then
+    return true;
+  else
+    return false;
+  end if;
+end ManualNORTHbyPos;
+
+function ManualSOUTHbyPos(router : integer) return boolean is
+begin
+  if (OPEN_IO(router) = "sou") then
+    return true;
+  else
+    return false;
+  end if;
+end ManualSOUTHbyPos;
+
+function ManualEASTbyPos(router : integer) return boolean is
+begin
+  if (OPEN_IO(router) = "eas") then
+    return true;
+  else
+    return false;
+  end if;
+end ManualEASTbyPos;
+
+function ManualWESTbyPos(router : integer) return boolean is
+begin
+  if (OPEN_IO(router) = "wes") then
+    return true;
+  else
+    return false;
+  end if;
+end ManualWESTbyPos;
+
+function io_index(router : integer) return integer is
+  variable i     : integer;
+  variable index : integer;
+begin
+  index := 0;
+  for i in 0 to router loop
+    if (OPEN_IO(i) = "eas" or OPEN_IO(i) = "wes" or OPEN_IO(i) = "nor" or OPEN_IO(i) = "sou") then
+      index := index + 1;
+    end if;
+  end loop;
+  return index-1;
+end io_index;
 
 end standards;
