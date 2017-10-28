@@ -742,153 +742,70 @@ void handle_app_request(){
 }
 
 
-
-void send_dma_operation(int target){
-	/*
-		int data_dma_operation[6];
-		data_dma_operation[0]= 1;
-		data_dma_operation[1]= 2;
-		data_dma_operation[2]= 3;
-		data_dma_operation[3]= 4;
-		data_dma_operation[4]= 5;
-		data_dma_operation[5]= 6;
-	*/
-
-	if(target == 0x00000101) {
-		//Trasmit
-
-		#include "transmit.h"
-
-		ServiceHeader *p = get_service_header_slot();
-		p->header = 0x0101;
-
-		p->service = DMA_OPERATION;
-		send_packet(p, transmit_code, sizeof(transmit_code)>>2);
-		//Se fosse inteiro era &nome da variavel e tamanho 1
-	}
-	else {
-		// Receive
-
-		#include "receive.h"
-
-		ServiceHeader *p = get_service_header_slot();
-			
-		p->header = 0x0001;
-		p->service = DMA_OPERATION;
-		//p->master_ID = cluster_master_address;
-	
-		send_packet(p, receive_code, sizeof(receive_code)>>2);
-		//Se fosse inteiro era &nome da variavel e tamanho 1
-	}
-
-	
-}
-
-
-void send_start_cpu(unsigned teste){
-
-	/*	int data_start_cpu[6]; 
-			data_start_cpu[0]= 10;
-			data_start_cpu[1]= 11;
-			data_start_cpu[2]= 12;
-			data_start_cpu[3]= 13;
-			data_start_cpu[4]= 14;
-			data_start_cpu[5]= 15;
-	*/
-	ServiceHeader *p = get_service_header_slot();
-
-	p->header = teste;
-
-	p->service = START_CPU;
-
-	p->period = 0x010;
-
-
-
-	//p->master_ID = cluster_master_address;
-	
-	send_packet(p, 0, 1); //send_packet(ServiceHeader *p, unsigned int initial_address, unsigned int dmni_msg_size)
-
-}
-
-
-
-
 int main() {
 
 	NewTask * pending_new_task;
 
 	//By default HeMPS assumes that GM is positioned at address 0
-	/*	if ( MemoryRead(NI_CONFIG) == 0){
+	if ( MemoryRead(NI_CONFIG) == 0){
 
-			puts("This kernel is global master\n");
+		puts("This kernel is global master\n");
 
-			is_global_master = 1;
+		is_global_master = 1;
 
-			global_master_address = net_address;
+		global_master_address = net_address;
 
-			initialize_clusters();
+		initialize_clusters();
 
-			initialize_slaves();
+		initialize_slaves();
 
-			initialize_cluster_load();
+		initialize_cluster_load();
 
-			} else {
+	} else {
 
-			puts("This kernel is local master\n");
+		puts("This kernel is local master\n");
 
-			is_global_master = 0;
+		is_global_master = 0;
+	}
+
+	initialize_applications();
+
+	init_new_task_list();
+
+	init_service_header_slots();
+
+	puts("Kernel Initialized\n");
+
+
+	for (;;) {
+
+		//LM looping
+		if (noc_interruption){
+
+			handle_packet();
+
+		} else if (pending_app_to_map && is_reclustering_NOT_active()){
+
+			handle_pending_application();
+
+
+		//GM looping
+		} else if (is_global_master && !MemoryRead(DMNI_SEND_ACTIVE)) {
+
+			pending_new_task = get_next_new_task();
+
+			if (pending_new_task){
+
+				send_task_allocation(pending_new_task);
+
+				pending_new_task->task_ID = -1;
+
+			} else if (app_req_reg) {
+
+				handle_app_request();
 			}
-
-			initialize_applications();
-
-			init_new_task_list();
-
-			init_service_header_slots();
-	*/
-
-	send_dma_operation(0x00000101);//envio um pacote com servico de acesso direto a DMNI
-	puts("Sent software to PE 1x1\n");
-
-	send_dma_operation(0x00000001);//envio um pacote com servico de acesso direto a DMNI
-	puts("Sent software to PE 0x1\n");
-
-	send_start_cpu(0x00000001);
-	puts("Started PE 0x1\n");
-
-	send_start_cpu(0x00000101);
-	puts("Started PE 1x1\n");
-
-
-	for (;;);/* {
-
-					 //LM looping
-					 if (noc_interruption){
-
-					 handle_packet();
-
-					 } else if (pending_app_to_map && is_reclustering_NOT_active()){
-
-					 handle_pending_application();
-
-
-					 //GM looping
-					 } else if (is_global_master && !MemoryRead(DMNI_SEND_ACTIVE)) {
-
-					 pending_new_task = get_next_new_task();
-
-					 if (pending_new_task){
-
-					 send_task_allocation(pending_new_task);
-
-					 pending_new_task->task_ID = -1;
-
-					 } else if (app_req_reg) {
-
-					 handle_app_request();
-					 }
-					 }
-					 }*/
+		}
+	}
 
 	return 0;
 }
