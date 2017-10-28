@@ -11,7 +11,7 @@ DUMP_MIPS         = mips-elf-objdump
 COPY_MIPS         = mips-elf-objcopy -I elf32-bigmips -O binary
 
 BOOT_TASK         = boot_task
-BOOT_TASK_SRC     = ../../software/boot_task/boot_task.asm
+BOOT_TASK_SRC     = ../../software/boot_task/boot_task.s
 
 TASK_SRC = $(wildcard *.c)
 TASK_OBJ = $(TASK_SRC:.c=.o)
@@ -19,8 +19,8 @@ TASK_OBJ = $(TASK_SRC:.c=.o)
 default: $(BOOT_TASK).o $(TASK_OBJ) 
 
 boot_task.o: $(BOOT_TASK_SRC)
-	@printf "${GREEN}Compiling boot task: %s ...${NC}\n" "$*.c"
-	$(AS_MIPS) --defsym sp_addr=$(PAGE_SP_INIT) -o $@ $^
+	@printf "${GREEN}Compiling boot task: %s ...${NC}\n" "$*.S"
+	$(AS_MIPS) -mips1 --defsym sp_addr=$(PAGE_SP_INIT) -o $@ $^
 
 #[$*] - only the filename - #https://www.gnu.org/software/make/manual/make.html#Automatic-Variables
 $(TASK_OBJ): $(TASK_SRC) 

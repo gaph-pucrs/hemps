@@ -1,0 +1,19 @@
+hw:
+  page_size_KB: 32
+  tasks_per_PE: 1 
+  repository_size_MB: 1
+  model_description: vhdl
+  noc_buffer_size: 8
+  mpsoc_dimension: [2,2]
+  cluster_dimension: [2,2]
+  master_location: LB
+  simple_soc: true
+  open_port:
+    - port: [0,0,S]
+apps: 
+  - name: transmit
+    start_time_ms: 1
+    location: [1,1]
+  - name: receive
+    start_time_ms: 0
+    location: [0,1]
