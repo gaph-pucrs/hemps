@@ -24,7 +24,7 @@ use work.standards.all;
 entity test_bench is
 
   type config is record
-    code_name : string(1 to 34);
+    code_name : string(1 to 40);
     position  : std_logic_vector(31 downto 0);
     code_size : std_logic_vector(31 downto 0);
   end record;
@@ -37,7 +37,7 @@ entity test_bench is
   constant router_description : string := "RTL";
 
   constant REPO_SIZE     : integer := (TOTAL_REPO_SIZE_BYTES/4);  --This math is because each repoline is 32 bits word
-  constant TAM_PACKSTART : integer := 13;
+  constant TAM_PACKSTART : integer := 4;
 
   type repo_type is array(REPO_SIZE-1 downto 0) of std_logic_vector(31 downto 0);
 
@@ -68,14 +68,17 @@ entity test_bench is
 
     file file_ptr    : text open read_mode is cfg_file;
     variable inline  : line;
-    variable strline : string(1 to 34);
+    variable strline : string(1 to 40);
     variable cfg     : list_of_apps;
+    variable str_len : integer;
   begin
 
     for i in 0 to APP_NUMBER-1 loop
       readline(file_ptr, inline);
+      str_len := inline'length;
       read(inline, strline(1 to inline'length));
-      cfg(i).code_name := strline;
+      cfg(i).code_name(1 to str_len) := strline(1 to str_len);
+      cfg(i).code_name(str_len+1 to 40) := (others => NUL);
       readline(file_ptr, inline);
       hread(inline, cfg(i).position);
       readline(file_ptr, inline);
@@ -117,21 +120,14 @@ architecture test_bench of test_bench is
   signal packstart_data    : packstart_type;
   signal app_code          : repo_type;
 
+  type send_state is (WAIT_state, SEND_APP, SEND_START);
+  signal SEND: send_state;
+
 begin
 
-  --packstart_data(12) <= x"00000101";
-  packstart_data(11) <= x"0000000B";
-  packstart_data(10) <= x"00000300";
-  packstart_data(9)  <= x"00000000";
-  packstart_data(8)  <= x"00000000";
-  packstart_data(7)  <= x"00000000";
-  packstart_data(6)  <= x"00000000";
-  packstart_data(5)  <= x"00000000";
-  packstart_data(4)  <= x"00000000";
-  packstart_data(3)  <= x"00000000";
+  packstart_data(0) <= x"00000002";
+  packstart_data(1) <= x"00000300";
   packstart_data(2)  <= x"00000000";
-  packstart_data(1)  <= x"00000000";
-  packstart_data(0)  <= x"00000000";
 
   --
   --  HeMPS instantiation 
@@ -207,43 +203,54 @@ begin
       flit_counter      <= 0;
       packstart_counter <= 0;
       file_counter      <= 0;
+      SEND              <= WAIT_state;
     elsif rising_edge(clock) then
-      if credit_o_io(0) = '1' then
-        if flit_counter > 0 then
-          rx_io(0) <= '1';
-          rd_addr  <= rd_addr + 1;
-          if rd_addr = 0 then
-            data_in_io(0) <= app_cfg(file_counter).position;
-          elsif rd_addr = 1 then
-            data_in_io(0) <= app_cfg(file_counter).code_size;
-            file_counter  <= file_counter + 1;
-          elsif rd_addr = 2 then
-            data_in_io(0) <= x"00000290";
-          else
-            data_in_io(0) <= app_code(CONV_INTEGER(rd_addr-3));
-            flit_counter  <= flit_counter - 1;
+      case SEND is
+        when WAIT_state =>
+          if file_counter < APP_NUMBER then
+            flit_counter  <= CONV_INTEGER(app_cfg(file_counter).code_size);
+            app_code      <= load_repo(app_cfg(file_counter).code_name);
+            rd_addr       <= (others => '0');
+            SEND          <= SEND_APP;
           end if;
-        else
-          if(file_counter > 0 and packstart_counter > 0) then
-            rx_io(0)          <= '1';
-            packstart_counter <= packstart_counter - 1;
-            data_in_io(0)     <= packstart_data(packstart_counter-1);
-          else
-            rx_io(0) <= '0';
-            rd_addr  <= (others => '0');
-            if file_counter < APP_NUMBER then
-              app_code                        <= load_repo(app_cfg(file_counter).code_name);
-              flit_counter                    <= CONV_INTEGER(app_cfg(file_counter).code_size);
-              packstart_counter               <= TAM_PACKSTART;
-              packstart_data(TAM_PACKSTART-1) <= app_cfg(file_counter).position;
+
+        when SEND_APP => 
+          if credit_o_io(0) = '1' and flit_counter > 0 then
+            rx_io(0) <= '1';
+            rd_addr  <= rd_addr + 1;
+            if rd_addr = 0 then
+              data_in_io(0) <= app_cfg(file_counter).position;
+            elsif rd_addr = 1 then
+              data_in_io(0) <= app_cfg(file_counter).code_size + 1;
+            elsif rd_addr = 2 then
+              data_in_io(0) <= x"00000290";
+            else
+              data_in_io(0) <= app_code(CONV_INTEGER(rd_addr-3));
+              flit_counter  <= flit_counter - 1;
             end if;
+          elsif flit_counter = 0 then
+            SEND      <= SEND_START;
+            rd_addr   <= (others => '0');
+            rx_io(0) <= '0';
           end if;
-        end if;
-      end if;
+
+        when SEND_START =>
+          if credit_o_io(0) = '1' and  rd_addr < TAM_PACKSTART then
+            rx_io(0) <= '1';
+            rd_addr  <= rd_addr + 1;
+            if rd_addr = 0 then
+              data_in_io(0) <= app_cfg(file_counter).position;
+            else
+              data_in_io(0) <= packstart_data(CONV_INTEGER(rd_addr-1));
+            end if;
+          else
+            file_counter  <= file_counter + 1;
+            rx_io(0)      <= '0';
+            SEND          <= WAIT_state;
+          end if;
+
+        end case;
     end if;
   end process;
 
 end test_bench;
-
-
-
