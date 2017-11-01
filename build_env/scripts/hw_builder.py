@@ -163,6 +163,18 @@ def generate_to_vhdl(is_master_list, yaml_r):
         if port[2] == "W":
             open_ports_vector[index] = "wes"
 
+    if open_ports[0][2] == "N":
+        loader_addr = 0xC0000000
+    if open_ports[0][2] == "S":
+        loader_addr = 0xE0000000
+    if open_ports[0][2] == "E":
+        loader_addr = 0x80000000
+    if open_ports[0][2] == "W":
+        loader_addr = 0xA0000000
+
+    loader_addr = loader_addr + (open_ports[0][1] << 8) + open_ports[0][1]
+
+
     open_ports_string = ""
     for i in range(0,x_mpsoc_dim*y_mpsoc_dim):
         open_ports_string = open_ports_string + "\"" + open_ports_vector[i] + "\","
@@ -189,7 +201,8 @@ def generate_to_vhdl(is_master_list, yaml_r):
     file_lines.append("    constant TAM_BUFFER               : integer := "+str(noc_buffer_size)+";\n")
     file_lines.append("    constant NUMBER_PROCESSORS        : integer := "+str(x_mpsoc_dim*y_mpsoc_dim)+";\n")
     file_lines.append("    constant SIMPLE_SOC               : boolean := "+str(simple_soc)+";\n")
-    file_lines.append("    constant IO_NUMBER                : integer := "+str(io_number)+";\n\n")
+    file_lines.append("    constant IO_NUMBER                : integer := "+str(io_number)+";\n")
+    file_lines.append("    constant LOADER_NETADDR           : std_logic_vector(31 downto 0) := x\"%x\";\n\n" % loader_addr)
     file_lines.append("    subtype kernel_str is string(1 to 3);\n")
     file_lines.append("    type pe_type_t is array(0 to NUMBER_PROCESSORS-1) of kernel_str;\n")
     file_lines.append("    constant pe_type : pe_type_t := ("+string_pe_type_vhdl+");\n\n")

@@ -20,9 +20,6 @@ use work.hemps_pkg.all;
 
 package standards is
 
-  -- at this moment assume the loader is fixed at router 0 south port
-  constant LOADER_NETADDR : std_logic_vector(31 downto 0) := x"E0000000";
-
 --------------------------------------------------------
 -- CONSTANTS
 --------------------------------------------------------
