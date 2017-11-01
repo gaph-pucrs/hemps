@@ -29,6 +29,7 @@ entry:
 	.globl exit
 	.ent exit
 	.set noreorder
+
 exit:
 	lui $16, 0x2000								# $16 = *HARDWARE_REGISTERS
 	la  $17, .RET_MSG							# $17 = *RET_MSG
@@ -38,8 +39,8 @@ exit:
 	lw  $9, 324($16) 						# $9 = LOADER_NETADDR
 	sw  $8, 12($17)							# RET_MSG.SOURCE = $8
 	sw  $9, 0($17)							# RET_MSG.TARGET = $9
-	ori $8, $0, 5								# $8 = 5 (DMNI_SIZE)
-	sw  $4, 0($17)							# RET_MSG.RETURN_CODE = $4
+	ori $8, $0, 5							# $8 = 5 (DMNI_SIZE)
+	sw  $4, 16($17)							# RET_MSG.RETURN_CODE = $4
 
 	# send it
 	sw	$8, 512($16)						# *DMNI_SIZE = $8
@@ -49,7 +50,7 @@ exit:
 	sw  $8, 560($16) 						# 1 -> DMNI_START
 
 	# commit suicide
-	li $8, 0xDEADBEAF 					# MAGIC WORD TO KILL CPU
+	li $8, 0xDEADBEEF 					# MAGIC WORD TO KILL CPU
 .L1:
   beq $0, $0, .L1	
   sw $8, 800($16) 						# SET_CPU_KILL
@@ -58,7 +59,7 @@ exit:
 # memory region reserved to assemble termination pkg
 .RET_MSG:
 	.word 0 											# TARGET
-	.word 2												# SIZE
+	.word 3												# SIZE
 	.word 0x70										# SERVICE
 	.word 0												# SOURCE
 	.word 0												# RETURN_CODE
@@ -66,6 +67,7 @@ exit:
 
    .globl SystemCall
    .ent SystemCall
+
 SystemCall:
    .set	noreorder
    
