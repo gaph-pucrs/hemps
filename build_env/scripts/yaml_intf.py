@@ -78,6 +78,11 @@ def get_apps_name_list(yaml_reader):
         
     return apps_name_list
 
+def get_apps_list(yaml_reader):
+   
+    apps_list = yaml_reader["apps"]        
+    return apps_list
+
 def get_apps_location_list(yaml_reader):
    
     apps_list = yaml_reader["apps"]

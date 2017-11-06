@@ -43,7 +43,7 @@ def generate_sw_pkg( yaml_r ):
     x_cluster_dim =     get_cluster_x_dim(yaml_r)
     y_cluster_dim =     get_cluster_y_dim(yaml_r)
     master_location =   get_master_location(yaml_r)
-    apps_list =         get_apps_name_list(yaml_r)
+    apps_list =         get_apps_list(yaml_r)
     static_mapping_list = get_static_mapping_list(yaml_r)
     
     
@@ -53,14 +53,15 @@ def generate_sw_pkg( yaml_r ):
     max_slave_processors = (x_mpsoc_dim*y_mpsoc_dim) - master_number
     max_cluster_slave = (x_cluster_dim * y_cluster_dim) - 1
     apps_number = len(apps_list)
-    static_lenght = str(len(static_mapping_list)) 
-    
+    static_lenght = str(len(static_mapping_list))
+
+
     #Computes the max of tasks into an app
-    max_task_per_app = 0
-    
-    for app_name in apps_list:
+    max_task_per_app = 0 #len(taks_list)
+    for app in apps_list:
+        tasks_list = app["tasks"]
         
-        task_count = len( get_app_task_name_list(".", app_name) )
+        task_count = len( tasks_list )
        
         if task_count > max_task_per_app:
             max_task_per_app = task_count

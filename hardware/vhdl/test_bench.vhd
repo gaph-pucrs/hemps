@@ -29,7 +29,8 @@ entity test_bench is
     code_size : std_logic_vector(31 downto 0);
   end record;
 
-  type list_of_apps is array(0 to APP_NUMBER-1) of config;
+  type list_of_tasks is array(0 to MAX_TASKS_APP-1) of config;
+  type list_of_apps is array(0 to APP_NUMBER-1) of string(1 to 40);
 
   --constant  log_file          : string := "output_master.txt"; --! port description
   constant mlite_description  : string := "RTL";
@@ -64,16 +65,17 @@ entity test_bench is
     return mem;
   end load_repo;
 
-  impure function get_cfg (cfg_file : in string) return list_of_apps is
+  impure function get_cfg (cfg_file : in string) return list_of_tasks is
 
     file file_ptr    : text open read_mode is cfg_file;
     variable inline  : line;
     variable strline : string(1 to 40);
-    variable cfg     : list_of_apps;
+    variable cfg     : list_of_tasks;
     variable str_len : integer;
+    variable i       : integer := 0;
   begin
 
-    for i in 0 to APP_NUMBER-1 loop
+    while not endfile(file_ptr) loop
       readline(file_ptr, inline);
       str_len := inline'length;
       read(inline, strline(1 to inline'length));
@@ -83,10 +85,48 @@ entity test_bench is
       hread(inline, cfg(i).position);
       readline(file_ptr, inline);
       hread(inline, cfg(i).code_size);
+      i := i + 1;
     end loop;
     file_close(file_ptr);
     return cfg;
   end get_cfg;
+
+  impure function get_num_tasks(cfg_file : in string) return integer is
+
+    file file_ptr    : text open read_mode is cfg_file;
+    variable inline  : line;
+    variable i       : integer := 0;
+  begin
+
+    while not endfile(file_ptr) loop
+      readline(file_ptr, inline);
+      readline(file_ptr, inline);
+      readline(file_ptr, inline);
+      i := i + 1;
+    end loop;
+    file_close(file_ptr);
+    return i;
+  end get_num_tasks;
+
+  impure function get_apps_cfg (cfg_file : in string) return list_of_apps is
+
+    file file_ptr     : text open read_mode is cfg_file;
+    variable inline   : line;
+    variable strline  : string(1 to 15);
+    variable apps_cfg : list_of_apps;
+    variable str_len  : integer;
+  begin
+
+    for i in 0 to APP_NUMBER-1 loop
+      readline(file_ptr, inline);
+      str_len := inline'length;
+      read(inline, strline(1 to inline'length));
+      apps_cfg(i)(1 to str_len) := strline(1 to str_len);
+      apps_cfg(i)(str_len+1 to 15) := (others => NUL);
+    end loop;
+    file_close(file_ptr);
+    return apps_cfg;
+  end get_apps_cfg;
 
 end;
 
@@ -96,7 +136,7 @@ architecture test_bench of test_bench is
   signal clock_200 : std_logic := '1';
   signal reset     : std_logic;
 
-  constant app_cfg : list_of_apps := get_cfg("apps.cfg");
+  constant apps_cfg   : list_of_apps := get_apps_cfg("apps.cfg");
 
   signal current_time : integer := 0;
   signal app_i        : integer := 0;
@@ -112,15 +152,18 @@ architecture test_bench of test_bench is
   signal clock_rx_io : std_logic_vector((IO_NUMBER-1) downto 0);
 
   --Leitura para IO
+  signal task_cfg          : list_of_tasks;
+  signal task_num          : integer;
   signal rd_addr           : std_logic_vector(23 downto 0);
   signal flit_counter      : integer;
   signal file_counter      : integer;
+  signal app_counter       : integer;
   signal packstart_counter : integer;
   type packstart_type is array(0 to TAM_PACKSTART-1) of regflit;
   signal packstart_data    : packstart_type;
-  signal app_code          : repo_type;
+  signal task_code         : repo_type;
 
-  type send_state is (WAIT_state, SEND_APP, SEND_START);
+  type send_state is (WAIT_state, GET_CODE, SEND_TASK, SEND_START);
   signal SEND: send_state;
 
 begin
@@ -203,29 +246,42 @@ begin
       flit_counter      <= 0;
       packstart_counter <= 0;
       file_counter      <= 0;
+      app_counter       <= 0;
+      task_num          <= 0;
       SEND              <= WAIT_state;
     elsif rising_edge(clock) then
       case SEND is
         when WAIT_state =>
-          if file_counter < APP_NUMBER then
-            flit_counter  <= CONV_INTEGER(app_cfg(file_counter).code_size);
-            app_code      <= load_repo(app_cfg(file_counter).code_name);
-            rd_addr       <= (others => '0');
-            SEND          <= SEND_APP;
+          if app_counter < APP_NUMBER then
+            task_cfg      <= get_cfg(apps_cfg(app_counter));
+            task_num      <= get_num_tasks(apps_cfg(app_counter));
+            SEND          <= GET_CODE;
           end if;
 
-        when SEND_APP => 
+        when GET_CODE =>
+          if file_counter < task_num then
+            flit_counter  <= CONV_INTEGER(task_cfg(file_counter).code_size);
+            task_code     <= load_repo(task_cfg(file_counter).code_name);
+            rd_addr       <= (others => '0');
+            SEND          <= SEND_TASK;
+          else
+            app_counter   <= app_counter + 1;
+            file_counter  <= 0;
+            SEND          <= WAIT_state;
+          end if;
+
+        when SEND_TASK => 
           if credit_o_io(0) = '1' and flit_counter > 0 then
             rx_io(0) <= '1';
             rd_addr  <= rd_addr + 1;
             if rd_addr = 0 then
-              data_in_io(0) <= app_cfg(file_counter).position;
+              data_in_io(0) <= task_cfg(file_counter).position;
             elsif rd_addr = 1 then
-              data_in_io(0) <= app_cfg(file_counter).code_size + 1;
+              data_in_io(0) <= task_cfg(file_counter).code_size + 1;
             elsif rd_addr = 2 then
               data_in_io(0) <= x"00000290";
             else
-              data_in_io(0) <= app_code(CONV_INTEGER(rd_addr-3));
+              data_in_io(0) <= task_code(CONV_INTEGER(rd_addr-3));
               flit_counter  <= flit_counter - 1;
             end if;
           elsif flit_counter = 0 then
@@ -239,14 +295,14 @@ begin
             rx_io(0) <= '1';
             rd_addr  <= rd_addr + 1;
             if rd_addr = 0 then
-              data_in_io(0) <= app_cfg(file_counter).position;
+              data_in_io(0) <= task_cfg(file_counter).position;
             else
               data_in_io(0) <= packstart_data(CONV_INTEGER(rd_addr-1));
             end if;
           else
             file_counter  <= file_counter + 1;
             rx_io(0)      <= '0';
-            SEND          <= WAIT_state;
+            SEND          <= GET_CODE;
           end if;
 
         end case;

@@ -128,6 +128,7 @@ def generate_to_vhdl(is_master_list, yaml_r):
     simple_soc =        get_simple_soc(yaml_r)
     open_ports =        get_open_ports(yaml_r)
     io_number =         get_io_number(yaml_r)
+    apps_list =         get_apps_list(yaml_r)
     
     
     #These lines compute the logical memory addresses used by the mlite to index the pages at the local memory
@@ -179,6 +180,16 @@ def generate_to_vhdl(is_master_list, yaml_r):
     for i in range(0,x_mpsoc_dim*y_mpsoc_dim):
         open_ports_string = open_ports_string + "\"" + open_ports_vector[i] + "\","
     open_ports_string = open_ports_string[0:len(open_ports_string)-1]
+
+    #Computes the max of tasks into an app
+    max_task_per_app = 0 #len(taks_list)
+    for app in apps_list:
+        tasks_list = app["tasks"]
+        
+        task_count = len( tasks_list )
+       
+        if task_count > max_task_per_app:
+            max_task_per_app = task_count
     
    
     file_lines = []
@@ -193,6 +204,7 @@ def generate_to_vhdl(is_master_list, yaml_r):
     file_lines.append("    constant MEMORY_SIZE_BYTES           : integer := "+str(memory_size_KB*1024)+";\n")
     file_lines.append("    constant TOTAL_REPO_SIZE_BYTES       : integer := "+str(repo_size_bytes)+";\n")
     file_lines.append("    constant APP_NUMBER                  : integer := "+str(app_number)+";\n")
+    file_lines.append("    constant MAX_TASKS_APP               : integer := "+str(max_task_per_app)+";\n")
     file_lines.append("    constant PAGE_SIZE_H_INDEX        : integer := "+str(page_size_h_index)+";\n")
     file_lines.append("    constant PAGE_NUMBER_H_INDEX      : integer := "+str(page_number_h_index)+";\n")
     file_lines.append("    -- Hemps top definitions\n")

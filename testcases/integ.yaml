@@ -11,9 +11,9 @@ hw:
   open_port:
     - port: [0,0,S]
 apps: 
-  - name: receive
-    start_time_ms: 0
-    location: [0,1]
-  - name: transmit
-    start_time_ms: 0
-    location: [1,1]
+  - name: pc_test
+    tasks:
+      - task: receive
+        location: [0,1]
+      - task: transmit
+        location: [1,1]

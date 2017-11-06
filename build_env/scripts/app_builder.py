@@ -34,6 +34,8 @@ def main():
     generate_appstart(apps_repo_addr_list, yaml_r)
 
     generate_cfg_file(yaml_r)
+
+    generate_map_pkg(yaml_r)
     
 
 def generate_apps_id(apps_name_list):
@@ -84,26 +86,57 @@ def generate_appstart(apps_repo_addr_list, yaml_r):
 
 def generate_cfg_file(yaml_r):
 
-    cfg_file_path = "apps.cfg"
+    apps_file_path = "apps.cfg"
 
     cfg_lines = []
+    apps_lines = []
 
-    app_list = get_apps_name_list(yaml_r)
-    location = get_apps_location_list(yaml_r)
+    app_list = get_apps_list(yaml_r)
 
     num_apps = len(app_list)
 
     for i in range(0,num_apps):
         app = app_list[i]
-        x_address = location[i][0]
-        y_address = location[i][1]
-        pos = x_address << 8 | y_address
-        size = get_task_txt_size(app, app)
-        cfg_lines.append("applications/" + app + "/" + app + ".txt\n")
-        cfg_lines.append(toX(pos)+"\n")
-        cfg_lines.append(toX(size)+"\n")
+        name = app["name"]
+        tasks_list = app["tasks"]
+        apps_lines.append(name + ".cfg\n")
+        for task in tasks_list:
+            task_name = task["task"]
+            location = task["location"]
+            x_address = location[0]
+            y_address = location[1]
+            pos = x_address << 8 | y_address
+            size = get_task_txt_size(name, task_name)
+            cfg_lines.append("applications/" + name + "/" + task_name+".txt\n")
+            cfg_lines.append(toX(pos)+"\n")
+            cfg_lines.append(toX(size)+"\n")
+        cfg_file_path = name + ".cfg"
+        writes_file_into_testcase(cfg_file_path, cfg_lines)
 
-    writes_file_into_testcase(cfg_file_path, cfg_lines)
+    writes_file_into_testcase(apps_file_path, apps_lines)
+
+def generate_map_pkg(yaml_r):
+
+    app_list = get_apps_list(yaml_r)
+
+    file_lines = []
+    #---------------- C SINTAX ------------------
+    file_lines.append("#ifndef _MAP_PKG_\n")
+    file_lines.append("#define _MAP_PKG_\n\n")
+
+    for app in app_list:
+        tasks_list = app["tasks"]
+        for task in tasks_list:
+            task_name = task["task"]
+            location = task["location"]
+            x_address = location[0]
+            y_address = location[1]
+            pos = x_address << 8 | y_address
+            file_lines.append("#define " + task_name + "\t0x" + toX(pos) + "\n")
+
+    file_lines.append("\n#endif\n")
+    
+    writes_file_into_testcase("include/map_pkg.h", file_lines)
 
 #Function that generates a new repository from the dir: /applications
 #Please, behold this following peace of art:     
