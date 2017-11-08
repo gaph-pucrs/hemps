@@ -136,7 +136,8 @@ begin
       elsif set_buff = '1' then
         recv_buffer <= config_data;
       elsif set_reset_cpu = '1' and config_data = x"DEADBEEF" then
-        reset_cpu <= '1';
+        recv_buffer <= (others => '0');
+        reset_cpu   <= '1';
       end if;
 
       if reset_cpu_r = '1' then
