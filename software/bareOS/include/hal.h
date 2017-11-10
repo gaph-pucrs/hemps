@@ -5,13 +5,13 @@
 
 /* Paramenters used by malloc */
 //pointer to the end of static program memory
-extern size_t _end;
+extern uint8_t _end;
 //assumes _stack points to the end of the memory
-extern size_t _stack;
+extern uint8_t* _mem_end_ptr;
 #define MALLOC_ALIGNMENT 4
 
 #define HEAP_START ((void*)&_end)
-#define HEAP_END ((void*)((&_stack)-1024)) // stack - 4kB
+#define HEAP_END ((void*)(_mem_end_ptr-1024)) // stack - 1kB
 #define HEAP_ALLOCATION_GRAIN 10 //1kB
 
 /*********** Hardware addresses ***********/

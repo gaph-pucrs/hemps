@@ -5,18 +5,22 @@
 _entry:
 	la $sp, _stack
 	la $gp, _gp
-	la $a0, _bss_start
-	la $a1, _bss_end
+	la $4, _bss_start
+	la $5, _bss_end
 .clr_bss:
-	beq a0, a1, .clr_bss_done
+	beq $4, $5, .clr_bss_done
 	nop
-	sw zero, 0($a0)
-	beq $zero, $zero, .clr_bss
-	addiu a0, a0, 4
+	sw $0, 0($4)
+	beq $0, $0, .clr_bss
+	addiu $4, $4, 4
 .clr_bss_done:
 	jal main
-	not
+	nop
 	j exit
-	or $a0, $v0, $zero
+	or $4, $2, $0
 	.set reorder
 	.end _entry
+
+	.section data
+	.global _mem_end_ptr
+_mem_end_ptr:	.word _stack

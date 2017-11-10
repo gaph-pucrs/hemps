@@ -13,9 +13,10 @@ OBJDUMP = $(TRIPLET)-objdump
 
 PROGNAME = $(basename $(wildcard *.c))
 
-BIN_FILES = $(addsuffix .bin, $(PROGNAME))
+DUMP_FILES = $(addsuffix .dump, $(PROGNAME))
 LST_FILES = $(addsuffix .lst, $(PROGNAME))
 TXT_FILES = $(addsuffix .txt, $(PROGNAME))
+BIN_FILES = $(addsuffix .bin, $(PROGNAME))
 
 BARE_OS = $(BAREOS_DIR)/crt0.o \
 					$(BAREOS_DIR)/hal.o \
@@ -24,15 +25,15 @@ BARE_OS = $(BAREOS_DIR)/crt0.o \
 					$(BAREOS_DIR)/comm.o \
 
 
-all : $(BIN_FILES) $(LST_FILES)
+all : $(DUMP_FILES) $(LST_FILES) $(TXT_FILES) $(BIN_FILES)
 
-%.bin : %.elf
+%.dump : %.bin
 	$(OBJCOPY) -O binary $< $@
 
-%.lst : %.elf
+%.lst : %.bin
 	$(OBJDUMP) -d $< > $@
 
-%.txt : %.bin
+%.txt : %.dump
 	hexdump -v -e '1/1 "%02x" 1/1 "%02x" 1/1 "%02x" 1/1 "%02x" "\n"' $< > $@
 
 %.o: %.c
@@ -44,7 +45,7 @@ all : $(BIN_FILES) $(LST_FILES)
 %.o: %.s
 	$(AS) $(ASFLAGS) -o $@ $<
 
-%.elf: $(BARE_OS) %.o
+%.bin: $(BARE_OS) %.o
 	$(LD) -o $@ $+ $(LDFLAGS)
 
 clean :
