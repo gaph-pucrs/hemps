@@ -21,6 +21,8 @@ def main():
     page_size_bytes = get_page_size_KB(yaml_r) * 1024
     
     generate_apps_id(apps_name_list)
+
+    generate_map_pkg(yaml_r)
     
     exit_status = os.system("cd applications/; make sp_init=" + str(page_size_bytes -1) )
     
@@ -34,8 +36,6 @@ def main():
     generate_appstart(apps_repo_addr_list, yaml_r)
 
     generate_cfg_file(yaml_r)
-
-    generate_map_pkg(yaml_r)
     
 
 def generate_apps_id(apps_name_list):
@@ -126,6 +126,7 @@ def generate_map_pkg(yaml_r):
 
     for app in app_list:
         tasks_list = app["tasks"]
+        app_name = app["name"]
         for task in tasks_list:
             task_name = task["task"]
             location = task["location"]
@@ -133,10 +134,9 @@ def generate_map_pkg(yaml_r):
             y_address = location[1]
             pos = x_address << 8 | y_address
             file_lines.append("#define " + task_name + "\t0x" + toX(pos) + "\n")
-
-    file_lines.append("\n#endif\n")
+        file_lines.append("\n#endif\n")
+        writes_file_into_testcase("applications/" + app_name + "/map_pkg.h", file_lines)
     
-    writes_file_into_testcase("include/map_pkg.h", file_lines)
 
 #Function that generates a new repository from the dir: /applications
 #Please, behold this following peace of art:     
