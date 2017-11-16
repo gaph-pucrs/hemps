@@ -2,10 +2,12 @@
 #include "map_pkg.h"
 
 int main() {
-	unsigned int i;
-	char hello[] = "Hello World!\n";
+	const char *hello = "Hello World!\n";
 
-	transmit(receiver, DMA_OPERATION, (unsigned int*)hello, (sizeof(hello)+3) >> 2);
+	send_msg(receiver, hello, strlen(hello)+1);
+	printf("Message transmited to %X\n", receiver);
+	send_msg(receiver, "END\n", strlen("END\n")+1);
+	printf("Termination message sent to %X, terminating\n", receiver);
 
 	return 0;
 }

@@ -1,18 +1,17 @@
 #include <libos.h>
 
 int main() {
-	char *msg;
+	char *msg = NULL;
 	flit_t src;
 	size_t size;
 
 	do {
-		prepare_recv_msg(&src, &size);
-		puts("Prepared to receive\n");
-		msg = wait_receive();
-		printf("%d bytes received from %X\n", size, src);
-		puts(msg);
 		free(msg);
-	} while(strcmp(msg, "END"));
+		prepare_recv_msg(&src, &size);
+		printf("Waiting to receive %d bytes from %X\n", size, src);
+		msg = wait_receive();
+		puts(msg);
+	} while(strcmp(msg, "END\n"));
 	
 	return 0;
 }

@@ -340,7 +340,7 @@ begin
   cpu_start         <= '1' when cpu_mem_address_reg = START_DMNI and write_enable = '1'          else '0';
   cpu_set_buff      <= '1' when cpu_mem_address_reg = DMNI_RECEIVE_BUFFER and write_enable = '1' else '0';
   cpu_set_reset     <= '1' when cpu_mem_address_reg = SET_CPU_KILL and write_enable = '1'        else '0';
-  req_read          <= '1' when cpu_mem_address_reg = DMNI_REQ_FIFO and write_enable = '0'       else '0';
+  req_read          <= '1' when cpu_mem_address_reg = DMNI_REQ_FIFO and write_enable = '1'       else '0';
 
   write_enable <= '1' when cpu_mem_write_byte_enable_reg /= "0000" else '0';
 

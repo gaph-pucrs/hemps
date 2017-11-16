@@ -50,30 +50,40 @@ char *itoa(int i, char *s, int base){
   return s;
 }
 
+union ptr {
+	const void *v;
+	uint8_t *uint8;
+	uint16_t *uint16;
+	uint32_t *uint32;
+};
+
+
 void *memset(void *dst, int ic, size_t bytes) {
   uint8_t c;
   uint32_t f;
+
+	union ptr d = {.v = dst};
 
 	/* Probably the most assemblish code ever written in C!
 	 * This is what you get when you put a processor designer 
 	 * to write software */
 
 	c = ic;
-	f = (c << 24) | (c << 16) | (c << 8) | c;
 
 	switch(bytes & 3) {
 	case 3:
-		*((uint8_t*)dst++) = c;
+		*(d.uint8++) = c;
 		bytes--;
 	case 2:
-		*((uint8_t*)dst++) = c;
+		*(d.uint8++) = c;
 		bytes--;
 	case 1:
-		*((uint8_t*)dst++) = c;
+		*(d.uint8++) = c;
 		bytes--;
 	case 0:
+		f = (c << 24) | (c << 16) | (c << 8) | c;
 		while(bytes){
-			*((uint32_t*)dst++) = f;
+			*(d.uint32++) = f;
 			bytes -= 4;
 		}
 	}
@@ -83,36 +93,23 @@ void *memset(void *dst, int ic, size_t bytes) {
 
 void *memcpy(void *dst, const void *src, size_t bytes) {
 
-	switch(bytes & 3) {
-	case 3:
-		*((uint8_t*)dst++) = *((uint8_t*)src++);
-		bytes--;
-	case 2:
-		*((uint8_t*)dst++) = *((uint8_t*)src++);
-		bytes--;
-	case 1:
-		*((uint8_t*)dst++) = *((uint8_t*)src++);
-		bytes--;
-	case 0:
-		switch(((size_t)dst | (size_t)src) & 3) {
-		case 1:
-		case 3:
-			while(bytes){
-				*((uint8_t*)dst++) = *((uint8_t*)src++);
-				bytes--;
-			}
+	union ptr d = {.v = dst} , s = {.v = src};
+
+	while(bytes) {
+		switch(((size_t)d.v | (size_t)s.v | bytes) & 3) {
+		case 0:
+			*(d.uint32++) = *(s.uint32++);
+			bytes-=4;
 			break;
 		case 2:
-			while(bytes){
-				*((uint16_t*)dst++) = *((uint16_t*)src++);
-				bytes-=2;
-			}
+			*(d.uint16++) = *(s.uint16++);
+			bytes-=2;
 			break;
-		case 0:
-			while(bytes){
-				*((uint32_t*)dst++) = *((uint32_t*)src++);
-				bytes-=4;
-			}
+		case 1:
+		case 3:
+			*(d.uint8++) = *(s.uint8++);
+			bytes--;
+			break;
 		}
 	}
 	

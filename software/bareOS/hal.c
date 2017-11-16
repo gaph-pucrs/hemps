@@ -17,7 +17,7 @@ void exit(int code) {
 }
 
 void putchar(char c) {
-	MemoryWrite32(UART_WRITE, (uint32_t)c);
+	MemoryWrite32(UART_WRITE, (uint32_t)c<<24);
 }
 
 void puts(const char *string) {
