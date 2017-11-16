@@ -4,8 +4,8 @@ hw:
   repository_size_MB: 1
   model_description: vhdl
   noc_buffer_size: 8
-  mpsoc_dimension: [2,2]
-  cluster_dimension: [2,2]
+  mpsoc_dimension: [3,2]
+  cluster_dimension: [3,2]
   master_location: LB
   simple_soc: true
   open_port:
@@ -13,7 +13,7 @@ hw:
 apps: 
   - name: pc_test
     tasks:
-      - task: receive
+      - task: receiver
         location: [0,1]
-      - task: transmit
+      - task: sender
         location: [1,1]

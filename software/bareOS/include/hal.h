@@ -42,7 +42,7 @@ extern uint8_t _stack;
 
 /* Task termination */
 #define CPU_KILL 0x20000320
-#define CPU_KILL_MAGIC 0xDEADBEAF
+#define CPU_KILL_MAGIC 0xDEADBEEF
 
 /* DMNI */
 #define DMNI_SIZE_2				0x20000204
