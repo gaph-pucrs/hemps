@@ -36,6 +36,7 @@ entity dmni is
     start          : in  std_logic;
     set_buff       : in  std_logic;
     set_reset_cpu  : in  std_logic;
+    request_read   : in  std_logic;
     config_data    : in  std_logic_vector(31 downto 0);
     -- Status outputs
     intr           : out std_logic;
@@ -43,6 +44,7 @@ entity dmni is
     receive_active : out std_logic;
     reset_cpu      : out std_logic;
     recv_buff_out  : out std_logic_vector(31 downto 0);
+    last_req       : out std_logic_vector(31 downto 0);
     -- Memory interface
     mem_address    : out std_logic_vector(31 downto 0);
     mem_data_write : out std_logic_vector(31 downto 0);
@@ -64,8 +66,8 @@ architecture dmni of dmni is
   constant DMNI_TIMER : std_logic_vector(4 downto 0) := "10000";
   constant WORD_SIZE  : std_logic_vector(4 downto 0) := "00100";
 
-  type dmni_state is (WAIT_state, LOAD, COPY_FROM_MEM, COPY_TO_MEM, COPY_TO_MEM_DMA, DISCARD, FINISH);
-  type operation_type is (LEGACY, DMMA, START_CPU);
+  type dmni_state is (WAIT_state, LOAD, COPY_FROM_MEM, COPY_TO_MEM, COPY_TO_MEM_DMA, COPY_TO_FIFO, DISCARD, FINISH);
+  type operation_type is (LEGACY, DMMA, MSG_REQ, START_CPU);
   signal DMNI_Send    : dmni_state;
   signal DMNI_Receive : dmni_state;
 
@@ -113,9 +115,54 @@ architecture dmni of dmni is
   signal payload_fix  : regflit;
   signal sizedata_fix : regflit;
   signal recv_op      : operation_type;
+
+  type req_fifo_t is array(0 to 7) of regflit;
+  signal req_fifo       : req_fifo_t;
+  signal req_rcount     : std_logic_vector(3 downto 0);
+  signal req_wcount     : std_logic_vector(3 downto 0);
+  signal req_we         : std_logic;
+  signal req_slot_avail : std_logic;
+  signal req_read_avail : std_logic;
 begin
+
+  --request messages fifo controller
+  proc_req_fifo : process(clock, reset)
+    variable rcount, wcount : std_logic_vector(3 downto 0);
+  begin
+    if reset = '1' then
+      req_rcount <= (others => '0');
+      req_wcount <= (others => '0');
+    elsif rising_edge(clock) then
+      if req_we = '1' then
+        wcount := req_wcount + 1;
+      else
+        wcount := req_wcount;
+      end if;
+
+      if request_read = '1' and req_read_avail = '1' then
+        rcount := req_rcount + 1;
+      else
+        rcount := req_rcount;
+      end if;
+
+      if rcount = wcount then
+        rcount := (others => '0');
+        wcount := (others => '0');
+      end if;
+
+      req_rcount <= rcount;
+      req_wcount <= wcount;
+    end if;
+  end process proc_req_fifo;
+
+  req_slot_avail <= '1' when req_wcount - req_rcount < 8 else '0';
+  req_read_avail <= '0' when req_wcount = req_rcount     else '1';
+
+  last_req <= req_fifo(conv_integer(req_rcount(2 downto 0))) when req_read_avail = '1'
+              else (others => '0');
+
   --config
-  proc_config : process(clock)
+  proc_config : process(clock, reset)
   begin
     if reset = '1' then
       recv_buffer <= (others => '0');
@@ -233,6 +280,7 @@ begin
       is_header         <= (others => '0');
       intr_counter_temp <= (others => '0');
       mem_byte_we       <= (others => '0');
+      req_we            <= '0';
     elsif (clock'event and clock = '1') then
       if (rx = '1' and slot_available = '1') then
         bufferr(CONV_INTEGER(last)) <= data_in;
@@ -264,14 +312,13 @@ begin
               payload_size <= payload_size - 1;
 
               if (payload_size = payload_fix) then
-                if (data_in = x"00000300") then  --Service 300 start_cpu
+                if data_in = START_CPU_OPERATION then  --Service 300 start_cpu
                   reset_cpu_r <= '1';
                   recv_op     <= START_CPU;
-                end if;
-              end if;
-              if (payload_size = payload_fix) then
-                if (data_in = x"00000290") then  --Service 290 dmni_operation
+                elsif data_in = DMMA_OPERATION then  --Service 290 dmni_operation
                   recv_op <= DMMA;
+                elsif data_in = REQ_OPERATION then
+                  recv_op <= MSG_REQ;
                 end if;
               end if;
             end if;
@@ -281,7 +328,10 @@ begin
       --Write to memory
       case DMNI_Receive is
         when WAIT_state =>
-          if ((recv_op = LEGACY and start = '1' and operation = '1') or (recv_op = DMMA and recv_buffer(0) = '0') or (recv_op = START_CPU))then
+          if ((recv_op = LEGACY and start = '1' and operation = '1') or
+              (recv_op = DMMA and recv_buffer(0) = '0') or
+              (recv_op = START_CPU) or
+              (recv_op = MSG_REQ)) then
             if(is_header(CONV_INTEGER(first)) = '1' and intr_counter_temp > 0) then
               intr_counter_temp <= intr_counter_temp -1;
             end if;
@@ -298,6 +348,10 @@ begin
                 recv_address <= recv_buffer - WORD_SIZE;
               when START_CPU =>
                 DMNI_Receive <= DISCARD;
+                recv_size    <= payload_fix + 2;
+                recv_address <= (others => '0');
+              when MSG_REQ =>
+                DMNI_Receive <= COPY_TO_FIFO;
                 recv_size    <= payload_fix + 2;
                 recv_address <= (others => '0');
             end case;
@@ -319,14 +373,38 @@ begin
           end if;
 
         when DISCARD =>
-          recv_address   <= (others => '0');
-          mem_byte_we    <= "0000";
-          mem_data_write <= (others => '0');
-          first          <= first + 1;
-          add_buffer     <= '0';
-          recv_size      <= recv_size -1;
-          if (recv_size = 0) then
-            DMNI_Receive <= FINISH;
+          if (read_av = '1') then
+            first      <= first + 1;
+            add_buffer <= '0';
+            recv_size  <= recv_size -1;
+            if (recv_size = 0) then
+              DMNI_Receive <= FINISH;
+            end if;
+          end if;
+
+        when COPY_TO_FIFO =>
+          if (read_av = '1') then
+            if (recv_size = sizedata_fix) then
+              if req_slot_avail = '1' then
+                req_fifo(conv_integer(req_rcount(2 downto 0))) <= bufferr(CONV_INTEGER(first));
+
+                req_we     <= '1';
+                first      <= first + 1;
+                add_buffer <= '0';
+                recv_size  <= recv_size -1;
+                if (recv_size = 0) then
+                  DMNI_Receive <= FINISH;
+                end if;
+              end if;
+            else
+              req_we     <= '0';
+              first      <= first + 1;
+              add_buffer <= '0';
+              recv_size  <= recv_size -1;
+              if (recv_size = 0) then
+                DMNI_Receive <= FINISH;
+              end if;
+            end if;
           end if;
 
         when COPY_TO_MEM_DMA =>
@@ -345,7 +423,7 @@ begin
             else
               mem_byte_we <= "0000";
             end if;
-          else
+          elsif read_av = '1' then
             first      <= first + 1;
             add_buffer <= '0';
             recv_size  <= recv_size -1;
@@ -356,6 +434,7 @@ begin
           end if;
 
         when FINISH =>
+          req_we           <= '0';
           receive_active_2 <= '0';
           mem_byte_we      <= "0000";
           recv_address     <= (others => '0');

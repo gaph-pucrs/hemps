@@ -20,7 +20,3 @@ _entry:
 	or $4, $2, $0
 	.set reorder
 	.end _entry
-
-	.section data
-	.global _mem_end_ptr
-_mem_end_ptr:	.word _stack

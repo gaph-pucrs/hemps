@@ -46,5 +46,10 @@ void *malloc(size_t size);
 void *calloc(size_t qty, size_t type_size);
 void free(void *ap);
 void exit(int code) __attribute__ ((noreturn));
+int strcmp(const char *a, const char *b);
+size_t srtlen(const char *a);
+
+void panic(const char *fmt, ...)
+  __attribute__((format(printf, 1, 2),noreturn));
 
 #endif /* !_LIBOS_H */

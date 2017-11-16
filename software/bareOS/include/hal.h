@@ -7,11 +7,11 @@
 //pointer to the end of static program memory
 extern uint8_t _end;
 //assumes _stack points to the end of the memory
-extern uint8_t* _mem_end_ptr;
+extern uint8_t _stack;
 #define MALLOC_ALIGNMENT 4
 
 #define HEAP_START ((void*)&_end)
-#define HEAP_END ((void*)(_mem_end_ptr-1024)) // stack - 1kB
+#define HEAP_END ((void*)((&_stack)-1024)) // stack - 1kB
 #define HEAP_ALLOCATION_GRAIN 10 //1kB
 
 /*********** Hardware addresses ***********/
@@ -45,8 +45,8 @@ extern uint8_t* _mem_end_ptr;
 #define CPU_KILL_MAGIC 0xDEADBEAF
 
 /* DMNI */
-#define DMNI_SIZE_2				0x20000205
-#define DMNI_ADDRESS_2 			0x20000215
+#define DMNI_SIZE_2				0x20000204
+#define DMNI_ADDRESS_2 			0x20000214
 #define DMNI_SIZE		  		0x20000200
 #define DMNI_ADDRESS		  	0x20000210
 #define DMNI_OP			  		0x20000220
@@ -55,6 +55,7 @@ extern uint8_t* _mem_end_ptr;
 #define DMNI_SEND_ACTIVE	  	0x20000250
 #define DMNI_RECEIVE_ACTIVE		0x20000260
 #define DMNI_RECEIVE_BUFFER   0x20000264
+#define DMNI_REQ_FIFO         0x20000268
 
 //Scheduling report
 #define SCHEDULING_REPORT	0x20000270

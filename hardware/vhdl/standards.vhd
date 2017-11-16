@@ -56,6 +56,7 @@ package standards is
   constant DMNI_SEND_ACTIVE    : std_logic_vector(31 downto 0) := x"20000250";
   constant DMNI_RECEIVE_ACTIVE : std_logic_vector(31 downto 0) := x"20000260";
   constant DMNI_RECEIVE_BUFFER : std_logic_vector(31 downto 0) := x"20000264";
+  constant DMNI_REQ_FIFO       : std_logic_vector(31 downto 0) := x"20000268";
 
   constant SCHEDULING_REPORT : std_logic_vector(31 downto 0) := x"20000270";
 
@@ -81,6 +82,13 @@ package standards is
   constant TL                   : integer                       := 6;
   constant TC                   : integer                       := 7;
   constant TR                   : integer                       := 8;
+
+  -----------------------------------------------------------------------------
+  -- DMNI Hardware handled operations
+  -----------------------------------------------------------------------------
+  constant DMMA_OPERATION      : std_logic_vector(31 downto 0) := x"00000290";
+  constant START_CPU_OPERATION : std_logic_vector(31 downto 0) := x"00000300";
+  constant REQ_OPERATION       : std_logic_vector(31 downto 0) := x"00000480";
 
 ---------------------------------------------------------
 -- CONSTANTS INDEPENDENTES

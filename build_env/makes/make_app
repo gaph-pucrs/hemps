@@ -1,13 +1,14 @@
-BAREOS_DIR = ../../software/bareOS
+BASEDIR = ../..
+BAREOS_DIR = $(BASEDIR)/software/bareOS
 TRIPLET = mips-elf
 CC = $(TRIPLET)-gcc
-CFLAGS = -I$(BAREOS_DIR)/include -O2 -fno-builtin -Wall -fms-extensions -nostdinc
+CFLAGS = -I$(BAREOS_DIR)/include -O2 -fno-builtin -Wall -fms-extensions -nostdinc -mips1
 AS = $(TRIPLET)-as
-ASFLAGS = --defsym _stack=$(PAGE_SP_INIT)
+ASFLAGS = -mips1
 CPP = $(TRIPLET)-g++
 CCFLAGS = $(CFLAGS)
-LD = $(TRIPLET)-gcc
-LDFLAGS = -nostdlib -T$(BAREOS_DIR)/hemps.ld
+LD = $(TRIPLET)-ld
+LDFLAGS = -nostdlib -T$(BAREOS_DIR)/hemps.ld --defsym=_stack=$(PAGE_SP_INIT)
 OBJCOPY = $(TRIPLET)-objcopy
 OBJDUMP = $(TRIPLET)-objdump
 

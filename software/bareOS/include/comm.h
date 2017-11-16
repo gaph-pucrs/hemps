@@ -2,6 +2,7 @@
 #define _COMM_H
 
 #include "prototypes.h"
+//#include <map_pkg.h>
 
 /* Manual Routing destination ports */
 #define MANUAL_EAST  0x80000000
@@ -24,10 +25,18 @@ typedef struct {
 	flit_t service;
 } mac_header_t;
 
+typedef struct {
+	uint16_t addr;
+	uint16_t size;
+} msg_req_t;
+
 void transmit(flit_t target, flit_t service,
 							void *msg, size_t len);
 
-volatile void *prepare_receive(volatile void *buff);
-void wait_receive();
+void *prepare_receive(void *buff);
+void *wait_receive();
+
+void send_msg(flit_t target, void *msg, size_t len);
+void *prepare_recv_msg(flit_t *src, size_t *size);
 
 #endif /* !_COMM_H */

@@ -26,6 +26,6 @@ void puts(const char *string) {
 	//PS: This indicates a hardware developer putting its hands on software development
 	//PS2: The original author need to review demorgans law for boolean simplification
 	for(str_part = (int*)string,  MemoryWrite32(UART_WRITE, *str_part);
-			((char*)str_part)[0] && ((char*)str_part )[1] && ((char*)str_part )[2] && ((char*)str_part)[3];
+			((char*)str_part)[0] && ((char*)str_part)[1] && ((char*)str_part)[2] && ((char*)str_part)[3];
 			MemoryWrite32(UART_WRITE, *(++str_part)));
 }

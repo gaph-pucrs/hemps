@@ -1,10 +1,9 @@
 #include <libos.h>
 
 int main() {
-	unsigned int i;
-	char hello[] = "Hello World!\n";
 
-	transmit(ROUTER_ADDR(0,1), DMA_OPERATION, (unsigned int*)hello, (sizeof(hello)+3) >> 2);
+	send_msg(ROUTER_ADDR(0, 1), "HELLO WORLD\n", strlen("HELLO WORLD\n")+1);
+	send_msg(ROUTER_ADDR(0, 1), "END", strlen("END")+1);
 
 	return 0;
 }

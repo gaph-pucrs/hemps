@@ -16,15 +16,17 @@ static header_t *morecore(size_t nunits) {
 	size_t size;
 	
 	size = align_type(min(align(nunits*sizeof(header_t), HEAP_ALLOCATION_GRAIN),
-												((size_t)lastp)-((size_t)HEAP_END)),
-										header_t)/sizeof(header_t);
+												((size_t)lastp)-((size_t)HEAP_END)), header_t);
+	size /= sizeof(header_t);
 
-	if(((void*)lastp <= HEAP_END) || size < nunits)
+	if(((void*)lastp >= HEAP_END) || size < nunits)
 		return NULL;
 
 	p = lastp;
-	p->size = size;
 	lastp += size;
+	
+	p->size = size;
+	free(p+1);
 
 	return p;
 }
@@ -63,11 +65,10 @@ void *malloc(size_t nbytes) {
 void free(void *ap) {
   header_t *bp, *p;
   int critical;
-  bp = (header_t *)ap - 1;
 
-#ifdef DEBUG
-  printf("free: Freeing %d bytes\n", bp->size*sizeof(header_t));
-#endif
+	if(!ap) return;
+
+	bp = (header_t *)ap - 1;
 
   critical = enter_critical();
 

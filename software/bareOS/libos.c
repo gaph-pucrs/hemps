@@ -119,6 +119,33 @@ void *memcpy(void *dst, const void *src, size_t bytes) {
   return dst;
 }
 
+int strcmp(const char *a, const char *b) {
+	while(*a && *b && *a == *b) a++, b++;
+
+	return *a - *b;
+}
+
+size_t strlen(const char *a) {
+	size_t ret;
+
+	for(ret = 0 ; *a ; a++, ret++);
+
+	return ret;
+}
+
+void panic(const char *fmt, ...) {
+  va_list ap;
+  int ret;
+
+	puts("PANIC: ");
+
+  va_start(ap, fmt);
+  ret = vprintf(fmt, ap);
+  va_end(ap);
+
+	exit(-1);
+}
+
 int printf(const char *fmt, ...) {
   va_list ap;
   int ret;

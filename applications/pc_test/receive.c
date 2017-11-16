@@ -1,13 +1,18 @@
 #include <libos.h>
 
 int main() {
-	volatile char *buff;
-	
-	buff=prepare_receive(malloc(256));
-	puts("Prepared to receive\n");
-	wait_receive();
-	puts("Data Received\n");
-	puts((char*)buff);
+	char *msg;
+	flit_t src;
+	size_t size;
+
+	do {
+		prepare_recv_msg(&src, &size);
+		puts("Prepared to receive\n");
+		msg = wait_receive();
+		printf("%d bytes received from %X\n", size, src);
+		puts(msg);
+		free(msg);
+	} while(strcmp(msg, "END"));
 	
 	return 0;
 }

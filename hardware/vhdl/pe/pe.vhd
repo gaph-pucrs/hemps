@@ -122,7 +122,8 @@ architecture structural of pe is
   signal slack_update_timer : std_logic_vector(31 downto 0);
 
   signal reset_dmni : std_logic;
-
+  signal last_req   : std_logic_vector(31 downto 0);
+  signal req_read   : std_logic;
 begin
 
 -----------------------------------------------------------------------------------
@@ -216,26 +217,26 @@ begin
     generic map(
       address_router => router_address)
     port map(
-      clock         => clock,
-      reset         => reset,
+      clock          => clock,
+      reset          => reset,
       --Configuration interface
-      set_address   => cpu_set_address,
-      set_address_2 => cpu_set_address_2,
-      set_size      => cpu_set_size,
-      set_size_2    => cpu_set_size_2,
-      set_op        => cpu_set_op,
-      start         => cpu_start,
-      config_data   => dmni_data_read,
-      set_buff      => cpu_set_buff,
-      set_reset_cpu => cpu_set_reset,
-
+      set_address    => cpu_set_address,
+      set_address_2  => cpu_set_address_2,
+      set_size       => cpu_set_size,
+      set_size_2     => cpu_set_size_2,
+      set_op         => cpu_set_op,
+      start          => cpu_start,
+      config_data    => dmni_data_read,
+      set_buff       => cpu_set_buff,
+      set_reset_cpu  => cpu_set_reset,
+      request_read   => req_read,
       -- Status outputs
       intr           => ni_intr,
       send_active    => dmni_send_active_sig,
       receive_active => dmni_receive_active_sig,
       reset_cpu      => reset_dmni,
       recv_buff_out  => dmni_recv_buff,
-
+      last_req       => last_req,
       -- Memory interface
       mem_address    => dmni_mem_address,
       mem_data_write => dmni_mem_data_write,
@@ -302,6 +303,7 @@ begin
                                  ZERO(31 downto 1) & dmni_receive_active_sig when cpu_mem_address_reg = DMNI_RECEIVE_ACTIVE else
                                  dmni_recv_buff                              when cpu_mem_address_reg = DMNI_RECEIVE_BUFFER else
                                  LOADER_NETADDR                              when cpu_mem_address_reg = LOADER_NETADDR_REG else
+                                 last_req                                    when cpu_mem_address_reg = DMNI_REQ_FIFO else
                                  data_read_ram;
 
   --Comb assignments
@@ -321,7 +323,7 @@ begin
   irq                      <= '1'           when (irq_status /= x"00" and irq_mask_reg /= x"00")                          else '0';
   dmni_data_read           <= cpu_mem_data_write_reg;
   dmni_mem_data_read       <= mem_data_read when dmni_enable_internal_ram = '1'                                           else repo_data_read;
-  cpu_enable_ram           <= '1'           when cpu_mem_address(30 downto 28) = "000"                                    else '0';
+  cpu_enable_ram           <= '1'           when cpu_mem_address(30 downto 28) = "000" and reset_dmni = '0'               else '0';
   dmni_enable_internal_ram <= '1'           when dmni_mem_address(30 downto 28) = "000"                                   else '0';
   end_sim_reg              <= x"00000000"   when cpu_mem_address_reg = END_SIM and write_enable = '1'                     else x"00000001";
   irq_status(7 downto 4)   <= "00" & ni_intr & '0';
@@ -337,7 +339,8 @@ begin
   cpu_set_op        <= '1' when cpu_mem_address_reg = DMNI_OP and write_enable = '1'             else '0';
   cpu_start         <= '1' when cpu_mem_address_reg = START_DMNI and write_enable = '1'          else '0';
   cpu_set_buff      <= '1' when cpu_mem_address_reg = DMNI_RECEIVE_BUFFER and write_enable = '1' else '0';
-  cpu_set_reset     <= '1' when cpu_mem_address_reg = SET_CPU_KILL                               else '0';
+  cpu_set_reset     <= '1' when cpu_mem_address_reg = SET_CPU_KILL and write_enable = '1'        else '0';
+  req_read          <= '1' when cpu_mem_address_reg = DMNI_REQ_FIFO and write_enable = '0'       else '0';
 
   write_enable <= '1' when cpu_mem_write_byte_enable_reg /= "0000" else '0';
 
