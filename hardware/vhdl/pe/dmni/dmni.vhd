@@ -386,7 +386,7 @@ begin
           if (read_av = '1') then
             if (recv_size = sizedata_fix) then
               if req_slot_avail = '1' then
-                req_fifo(conv_integer(req_rcount(2 downto 0))) <= bufferr(CONV_INTEGER(first));
+                req_fifo(conv_integer(req_wcount(2 downto 0))) <= bufferr(CONV_INTEGER(first));
 
                 req_we     <= '1';
                 first      <= first + 1;
