@@ -3,9 +3,9 @@
 #define ARRAY_SIZE 40
 #define LFSR_POL 0xA3000000
 
-#define TASK_REQUEST    1
-#define KILL_PROC		2
-#define MSG_ACK			3
+#define TASK_REQUEST    0x1000
+#define KILL_PROC		    0x2000
+#define MSG_ACK			    0x3000
 
 char *itoasc(unsigned int num)
 {

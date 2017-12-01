@@ -42,7 +42,7 @@ int main(){
 	int task = 0;
 	int slave_id;
 
-	int msg_kill;
+	int msg_kill = KILL_PROC;
 	flit_t src;
 	size_t size;
 
@@ -56,7 +56,8 @@ int main(){
 		puts(itoasc(buff[0]));
 		puts("\n");
 		slave_task[buff[0]] = task;
-		send_msg(slave_addr[buff[0]], (unsigned int*)array[task], ARRAY_SIZE*4);
+		send_msg(slave_addr[buff[0]], (unsigned int*)array[task], sizeof(array[task]));
+		free(buff);
 		task++;
 	}
 
@@ -65,16 +66,16 @@ int main(){
 		printf("Waiting to receive %d bytes from slave %X\n", size, src);
 		buff = wait_receive();
 		print_array(buff, ARRAY_SIZE);
+		free(buff);
 		slave_id = get_id(src);
 		slave_task[slave_id] = task;
 		if (task == TASKS){
-			send_msg(slave_addr[slave_id], &msg_kill, 4);
+			send_msg(slave_addr[slave_id], &msg_kill, sizeof(msg_kill));
 			printf("Master Sening kill to %X\n", src);
 		}
 		else {
-			send_msg(slave_addr[slave_id], (unsigned int*)array[task], ARRAY_SIZE*4);
+			send_msg(slave_addr[slave_id], (unsigned int*)array[task], sizeof(array[task]));
 			task++;
 		}
 	}
-		
 }
