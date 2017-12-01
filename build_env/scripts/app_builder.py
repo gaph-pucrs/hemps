@@ -88,7 +88,6 @@ def generate_cfg_file(yaml_r):
 
     apps_file_path = "apps.cfg"
 
-    cfg_lines = []
     apps_lines = []
 
     app_list = get_apps_list(yaml_r)
@@ -100,6 +99,7 @@ def generate_cfg_file(yaml_r):
         name = app["name"]
         tasks_list = app["tasks"]
         apps_lines.append(name + ".cfg\n")
+        cfg_lines = []
         for task in tasks_list:
             task_name = task["task"]
             location = task["location"]
