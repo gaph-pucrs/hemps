@@ -84,6 +84,8 @@ def main():
     copy_hardware( HEMPS_PATH,  TESTCASE_NAME, model_description)
     copy_makefiles( HEMPS_PATH,  TESTCASE_NAME, page_size_KB, memory_size_KB, model_description, apps_name_list, simul_time)
     copy_testcase_file( TESTCASE_NAME, INPUT_TESTCASE_FILE_PATH)
+    #Calls the hemps-wave_gen script if
+    generate_wave(INPUT_TESTCASE_FILE_PATH)
     
     #Create other importatants dirs
     create_ifn_exists(TESTCASE_NAME+"/include")
@@ -91,9 +93,7 @@ def main():
     
     #Calls the deloream_env.py to generate all necessary debugging dir and files
     generate_deloream_env(TESTCASE_NAME, yaml_reader)
-    
-    #Calls the hemps-wave_gen script if
-    generate_wave(INPUT_TESTCASE_FILE_PATH)
+
     
 # ----------------------------------------- FUNCTIONS ---------------------------------------------
 

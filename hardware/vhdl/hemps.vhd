@@ -89,7 +89,7 @@ begin
     PE : entity work.pe
       generic map (
         router_address => RouterAddress(i),
-        kernel_type    => pe_type(i),
+        kernel_type    => "sla",
         log_file       => log_filename(i),
         simple_soc     => SIMPLE_SOC,
         manual_NORTH   => ManualNORTHbyPos(i),

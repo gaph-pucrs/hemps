@@ -29,12 +29,12 @@ def generate_hw_pkg( yaml_r ):
     #Variables from yaml used into this function
     x_mpsoc_dim =       get_mpsoc_x_dim(yaml_r)
     y_mpsoc_dim =       get_mpsoc_y_dim(yaml_r)
-    x_cluster_dim =     get_cluster_x_dim(yaml_r)
-    y_cluster_dim =     get_cluster_y_dim(yaml_r)
-    master_location =   get_master_location(yaml_r)
+    x_cluster_dim =     get_mpsoc_x_dim(yaml_r)
+    y_cluster_dim =     get_mpsoc_y_dim(yaml_r)
+    #master_location =   get_master_location(yaml_r)
     system_model_desc = get_model_description(yaml_r)
 
-    cluster_list = create_cluster_list(x_mpsoc_dim, y_mpsoc_dim, x_cluster_dim, y_cluster_dim, master_location)
+    cluster_list = [] #create_cluster_list(x_mpsoc_dim, y_mpsoc_dim, x_cluster_dim, y_cluster_dim, master_location)
     
     pe_type = []
     #----------- Generates PEs types ----------------
@@ -120,7 +120,7 @@ def generate_to_vhdl(is_master_list, yaml_r):
     #Variables from yaml used into this function
     page_size_KB =      get_page_size_KB(yaml_r)
     memory_size_KB =    get_memory_size_KB(yaml_r)
-    repo_size_bytes =   get_repository_size_BYTES(yaml_r)
+    #repo_size_bytes =   get_repository_size_BYTES(yaml_r)
     noc_buffer_size =   get_noc_buffer_size(yaml_r)
     x_mpsoc_dim =       get_mpsoc_x_dim(yaml_r)
     y_mpsoc_dim =       get_mpsoc_y_dim(yaml_r)
@@ -202,7 +202,7 @@ def generate_to_vhdl(is_master_list, yaml_r):
     file_lines.append("    -- paging definitions\n")
     file_lines.append("    constant PAGE_SIZE_BYTES             : integer := "+str(page_size_KB*1024)+";\n")
     file_lines.append("    constant MEMORY_SIZE_BYTES           : integer := "+str(memory_size_KB*1024)+";\n")
-    file_lines.append("    constant TOTAL_REPO_SIZE_BYTES       : integer := "+str(repo_size_bytes)+";\n")
+    #file_lines.append("    constant TOTAL_REPO_SIZE_BYTES       : integer := "+str(repo_size_bytes)+";\n")
     file_lines.append("    constant APP_NUMBER                  : integer := "+str(app_number)+";\n")
     file_lines.append("    constant MAX_TASKS_APP               : integer := "+str(max_task_per_app)+";\n")
     file_lines.append("    constant PAGE_SIZE_H_INDEX        : integer := "+str(page_size_h_index)+";\n")
@@ -216,8 +216,8 @@ def generate_to_vhdl(is_master_list, yaml_r):
     file_lines.append("    constant IO_NUMBER                : integer := "+str(io_number)+";\n")
     file_lines.append("    constant LOADER_NETADDR           : std_logic_vector(31 downto 0) := x\"%x\";\n\n" % loader_addr)
     file_lines.append("    subtype kernel_str is string(1 to 3);\n")
-    file_lines.append("    type pe_type_t is array(0 to NUMBER_PROCESSORS-1) of kernel_str;\n")
-    file_lines.append("    constant pe_type : pe_type_t := ("+string_pe_type_vhdl+");\n\n")
+    #file_lines.append("    type pe_type_t is array(0 to NUMBER_PROCESSORS-1) of kernel_str;\n")
+    #file_lines.append("    constant pe_type : pe_type_t := ("+string_pe_type_vhdl+");\n\n")
     file_lines.append("    subtype manual_io_option is string(1 to 3);\n")
     file_lines.append("    type manual_io_type is array(0 to NUMBER_PROCESSORS-1) of manual_io_option;\n")
     file_lines.append("    constant OPEN_IO : manual_io_type := ("+open_ports_string+");\n\n")

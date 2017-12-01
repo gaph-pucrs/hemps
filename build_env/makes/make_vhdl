@@ -11,7 +11,7 @@ STAND		=standards
 TOP 		=hemps receive_data inject_data test_bench
 PE	 		=pe
 DMNI 		=dmni
-MEMORY 		=ram_master ram_slave ram_simple
+MEMORY 		=ram_simple ram_master ram_slave
 PROCESSOR 	=mlite_pack UartFile alu bus_mux control mem_ctrl mult pc_next pipeline reg_bank shifter mlite_cpu
 ROUTER	 	=Hermes_buffer Hermes_crossbar Hermes_switchcontrol RouterCC
 

@@ -30,10 +30,10 @@ def main():
         sys.exit("\nError compiling applications' source code\n");
     
     #Generate the repository.txt and repository_debug.txt files, returning a list of tuple {app_name, repo_address}
-    apps_repo_addr_list = generate_repository(yaml_r, apps_name_list);
+    #apps_repo_addr_list = generate_repository(yaml_r, apps_name_list);
     
     #Generates the appstart.txt and appstart_debug.txt files
-    generate_appstart(apps_repo_addr_list, yaml_r)
+    #generate_appstart(apps_repo_addr_list, yaml_r)
 
     generate_cfg_file(yaml_r)
     

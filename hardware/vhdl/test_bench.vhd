@@ -37,7 +37,7 @@ entity test_bench is
   constant ram_description    : string := "RTL";
   constant router_description : string := "RTL";
 
-  constant REPO_SIZE     : integer := (TOTAL_REPO_SIZE_BYTES/4);  --This math is because each repoline is 32 bits word
+  constant REPO_SIZE     : integer := (MEMORY_SIZE_BYTES/4);  --This math is because each repoline is 32 bits word
   constant TAM_PACKSTART : integer := 4;
 
   type repo_type is array(REPO_SIZE-1 downto 0) of std_logic_vector(31 downto 0);

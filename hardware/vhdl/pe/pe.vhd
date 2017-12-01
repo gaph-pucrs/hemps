@@ -157,7 +157,7 @@ begin
         address_b    => addr_b,
         data_write_b => dmni_mem_data_write,
         data_read_b  => mem_data_read
-        );
+      );
   end generate;
 
   slave : if kernel_type = "sla" and simple_soc = false generate
@@ -174,7 +174,7 @@ begin
         address_b    => addr_b,
         data_write_b => dmni_mem_data_write,
         data_read_b  => mem_data_read
-        );
+      );
   end generate;
 
   simple_soc_ram : if simple_soc = true generate
