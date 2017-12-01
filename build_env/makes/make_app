@@ -23,7 +23,7 @@ BARE_OS = $(BAREOS_DIR)/crt0.o \
 					$(BAREOS_DIR)/hal.o \
 					$(BAREOS_DIR)/libos.o \
 					$(BAREOS_DIR)/malloc.o \
-					$(BAREOS_DIR)/comm.o \
+					$(BAREOS_DIR)/comm.o
 
 
 all : $(DUMP_FILES) $(LST_FILES) $(TXT_FILES) $(BIN_FILES)

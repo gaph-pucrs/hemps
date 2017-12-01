@@ -29,6 +29,8 @@
 #define ASSERT_CONCAT(a, b) ASSERT_CONCAT_(a, b)
 #define ct_assert(e) enum { ASSERT_CONCAT(assert_line_, __LINE__) = 1/(!!(e)) }
 
+#define mem_offset(base, target) ((size_t)&(target) - (size_t)&(base))
+
 typedef __builtin_va_list __gnuc_va_list;
 typedef __gnuc_va_list va_list;
 

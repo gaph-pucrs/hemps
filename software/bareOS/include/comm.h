@@ -20,9 +20,10 @@
 typedef uint32_t flit_t;
 
 typedef struct {
-	flit_t header;
-	flit_t payload_size;
+	flit_t target;
+	flit_t length;
 	flit_t service;
+	flit_t payload[];
 } mac_header_t;
 
 typedef struct {
@@ -38,5 +39,7 @@ void *wait_receive();
 
 void send_msg(flit_t target, void *msg, size_t len);
 void *prepare_recv_msg(flit_t *src, size_t *size);
+
+void *receive_msg(flit_t *src, size_t *size);
 
 #endif /* !_COMM_H */

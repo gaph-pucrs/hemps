@@ -140,6 +140,8 @@ void panic(const char *fmt, ...) {
   ret = vprintf(fmt, ap);
   va_end(ap);
 
+	putchar('\n');
+
 	exit(-1);
 }
 
