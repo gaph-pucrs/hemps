@@ -119,14 +119,14 @@ def generate_map_pkg(yaml_r):
 
     app_list = get_apps_list(yaml_r)
 
-    file_lines = []
-    #---------------- C SINTAX ------------------
-    file_lines.append("#ifndef _MAP_PKG_\n")
-    file_lines.append("#define _MAP_PKG_\n\n")
 
     for app in app_list:
         tasks_list = app["tasks"]
         app_name = app["name"]
+        #---------------- C SINTAX ------------------
+        file_lines = []
+    	file_lines.append("#ifndef _MAP_PKG_\n")
+    	file_lines.append("#define _MAP_PKG_\n\n")
         for task in tasks_list:
             task_name = task["task"]
             location = task["location"]
