@@ -3,32 +3,32 @@
 /* Shamelessly stolen from K&R C Programing Language Book */
 
 typedef struct header {
-    struct header *ptr;
-    size_t size;
+  struct header *ptr;
+  size_t size;
 } header_t __attribute__ ((aligned(MALLOC_ALIGNMENT)));
 
 static header_t base = {.ptr = &base, .size = 0 };
 static header_t *freep = &base;
 
 static header_t *morecore(size_t nunits) {
-	static header_t *lastp = HEAP_START;
-	header_t *p;
-	size_t size;
-	
-	size = align_type(min(align(nunits*sizeof(header_t), HEAP_ALLOCATION_GRAIN),
-												((size_t)lastp)-((size_t)HEAP_END)), header_t);
-	size /= sizeof(header_t);
+  static header_t *lastp = HEAP_START;
+  header_t *p;
+  size_t size;
 
-	if(((void*)lastp >= HEAP_END) || size < nunits)
-		return NULL;
+  size = align_type(min(align(nunits*sizeof(header_t), HEAP_ALLOCATION_GRAIN),
+                        ((size_t)lastp)-((size_t)HEAP_END)), header_t);
+  size /= sizeof(header_t);
 
-	p = lastp;
-	lastp += size;
-	
-	p->size = size;
-	free(p+1);
+  if(((void*)lastp >= HEAP_END) || size < nunits)
+    return NULL;
 
-	return p;
+  p = lastp;
+  lastp += size;
+
+  p->size = size;
+  free(p+1);
+
+  return p;
 }
 
 void *malloc(size_t nbytes) {
@@ -43,21 +43,21 @@ void *malloc(size_t nbytes) {
   for (p = prevp->ptr; ; prevp = p, p = p->ptr) {
     if (p->size >= nunits) {
       if (p->size == nunits)
-				prevp->ptr = p->ptr;
+        prevp->ptr = p->ptr;
       else {
-				p->size -= nunits;
-				p += p->size;
-				p->size = nunits;
+        p->size -= nunits;
+        p += p->size;
+        p->size = nunits;
       }
       freep = prevp;
       leave_critical(critical);
       return (void *)(p+1);
     }
     if (p == freep) {
-			if((p = morecore(nunits)) == NULL) {
-				leave_critical(critical);
-				return NULL;
-			}
+      if((p = morecore(nunits)) == NULL) {
+        leave_critical(critical);
+        return NULL;
+      }
     }
   }
 }
@@ -66,9 +66,9 @@ void free(void *ap) {
   header_t *bp, *p;
   int critical;
 
-	if(!ap) return;
+  if(!ap) return;
 
-	bp = (header_t *)ap - 1;
+  bp = (header_t *)ap - 1;
 
   critical = enter_critical();
 
