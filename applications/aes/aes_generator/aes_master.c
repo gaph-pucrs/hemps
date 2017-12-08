@@ -7,8 +7,8 @@
 *********************************************************************/
 
 /*************************** HEADER FILES ***************************/
-#include <stdlib.h>
-#include <api.h>
+#include <libos.h>
+#include "map_pkg.h"
 #include "aes_master.h"
 /***************************** DEFINES ******************************/
 // total message length
@@ -22,7 +22,7 @@
 
 //index of slaves (slave names)
 int Slave[MAX_SLAVES] = {};
-Message msg;
+int *msg;
 
 /*************************** MAIN PROGRAM ***************************/
 
@@ -34,30 +34,29 @@ int main()
 	int msg_length, blocks, qtd_messages[MAX_SLAVES];
 	int pad_value, aux_msg[3];
 	int aux1_blocks_PE;
-	int aux2_blocks_PE;	
+	int aux2_blocks_PE;
+	int size;
+	int src;
+	int msg1[4*AES_BLOCK_SIZE];
 
 	// fill each block with values 'A', 'B', ...
 	for(x = 0; x < MSG_LENGHT; x++){
 		plain_msg[x] = ((x/16)%26)+0x41;
 	}
 	
-    Echo("task AES started.");
-    Echo(itoa(GetTick()));
-
+    puts("task AES started.\n");
 	// calculate number of block and pad value (PCKS5) of last block
 	msg_length = MSG_LENGHT;	
 	blocks = (MSG_LENGHT%AES_BLOCK_SIZE)==0 ? (MSG_LENGHT/AES_BLOCK_SIZE) : (MSG_LENGHT/AES_BLOCK_SIZE)+1;
 	pad_value = (AES_BLOCK_SIZE - (msg_length%AES_BLOCK_SIZE))%AES_BLOCK_SIZE;	
 	
-	Echo(" ");
-	Echo("Blocks:");	
-	Echo(itoa(blocks));
+	puts(" ");
+	puts("Blocks:\n");	
 
 #ifdef debug_comunication_on	
-    Echo(" ");
-    Echo("plain msg");
+    puts(" ");
+    puts("plain msg\n");
     for(x=0; x<MSG_LENGHT-1;x++){
-		Echo(itoh(plain_msg[x]));		
 	}
 #endif
 
@@ -78,15 +77,15 @@ int main()
 	// Send number of block and operation mode and ID
 	// to each Slave_PE
 	for(x=0; x < MAX_SLAVES; x++){
-		msg.length = sizeof(aux_msg);
+		size = sizeof(aux_msg);
 		aux_msg[0] = CIPHER_MODE;
 		aux_msg[1] = qtd_messages[x];
 		aux_msg[2] = x+1;
 		if(x >= NUMBER_OF_SLAVES) // zero messages to Slave not used
 			aux_msg[0] = END_TASK;
-		memcpy(&msg.msg, &aux_msg, 4*msg.length);
-		Send(&msg, Slave[x]);  
-	}
+		memcpy(msg1, &aux_msg, 4*sizeof(aux_msg));
+		send_msg(Slave[x], (unsigned int*)msg1, sizeof(msg1));
+		}
 
 	// Send blocks to Cipher and 
 	// Receive the correspondent block Encrypted
@@ -94,20 +93,21 @@ int main()
 		// send a block to Slave_PE encrypt
 		for(y = 0; y < NUMBER_OF_SLAVES; y++){
 			if(qtd_messages[(x+y) % NUMBER_OF_SLAVES] != 0){
-				msg.length = 4*AES_BLOCK_SIZE;
-				memcpy(msg.msg, &plain_msg[(x+y)*AES_BLOCK_SIZE], 4*AES_BLOCK_SIZE);
-				Send(&msg, Slave[(x+y) % NUMBER_OF_SLAVES]);
+				size = 4*AES_BLOCK_SIZE;
+				memcpy(msg1, &plain_msg[(x+y)*AES_BLOCK_SIZE], 4*AES_BLOCK_SIZE);
+				send_msg(Slave[x+y], (unsigned int*)msg1, sizeof(msg1));
 			}
 		}
 	
 		// Receive Encrypted block from Slave_PE
 		for(y = 0; y < NUMBER_OF_SLAVES; y++){
 			if(qtd_messages[(x+y) % NUMBER_OF_SLAVES] != 0){
-				Receive(&msg, Slave[(x+y) % NUMBER_OF_SLAVES]);
+				prepare_recv_msg(&src, &size);
+        		msg = wait_receive();
 				j = 0;
 				for (i=(x+y)*AES_BLOCK_SIZE;i < ((x+y)*AES_BLOCK_SIZE) + AES_BLOCK_SIZE; i++)
 				{
-					cipher_msg[i] = msg.msg[j];
+					cipher_msg[i] = msg[j];
 					j++;
 				}
 				j = 0;
@@ -116,12 +116,11 @@ int main()
 		}
 	}
 #ifdef debug_comunication_on
-	Echo(" ");  
-	Echo("cipher msg");
+	puts(" ");  
+	puts("cipher msg\n");
 	for(i=0; i<MSG_LENGHT;i++){
-		Echo(itoh(cipher_msg[i]));		
 	}
-	Echo(" "); 
+	puts(" "); 
 #endif 
 	
 	////////////////////////////////////////////////
@@ -136,11 +135,12 @@ int main()
 	// Send number of block and operation mode
 	// to each Slave_PE
 	for(x=0; x < NUMBER_OF_SLAVES; x++){
-		msg.length = sizeof(aux_msg);
+		size = sizeof(aux_msg);
 		aux_msg[0] = DECIPHER_MODE;
 		aux_msg[1] = qtd_messages[x];
-		memcpy(&msg.msg, &aux_msg, 4*msg.length);
-		Send(&msg, Slave[x]);  
+		memcpy(msg1, &aux_msg, 4*sizeof(aux_msg));
+		send_msg(Slave[x], (unsigned int*)msg1, sizeof(msg1));
+  
 	}
 
 	// Send blocks to Cipher and 
@@ -149,19 +149,23 @@ int main()
 		// send each block to a Slave_PE
 		for(y = 0; y < NUMBER_OF_SLAVES; y++){
 			if(qtd_messages[(x+y) % NUMBER_OF_SLAVES] != 0){
-				msg.length = 4*AES_BLOCK_SIZE;
-				memcpy(msg.msg, &cipher_msg[(x+y)*AES_BLOCK_SIZE], 4*AES_BLOCK_SIZE);
-				Send(&msg, Slave[(x+y) % NUMBER_OF_SLAVES]);   
+				size = 4*AES_BLOCK_SIZE;
+				memcpy(msg1, &cipher_msg[(x+y)*AES_BLOCK_SIZE], 4*AES_BLOCK_SIZE);
+				prepare_recv_msg(&src, &size);
+        		msg = wait_receive();
+				send_msg(Slave[(x+y) % NUMBER_OF_SLAVES], (unsigned int*)msg1, sizeof(msg1));
+   
 			} 
 		}
 		// Receive Encrypted block from Slave_PE
 		for(y = 0; y < NUMBER_OF_SLAVES; y++){
 			if(qtd_messages[(x+y) % NUMBER_OF_SLAVES] != 0){
-				Receive(&msg, Slave[(x+y) % NUMBER_OF_SLAVES]);
+				prepare_recv_msg(&src, &size);
+        		msg = wait_receive();
 				j = 0;
 				for (i=(x+y)*AES_BLOCK_SIZE;i < ((x+y)*AES_BLOCK_SIZE) + AES_BLOCK_SIZE; i++)
 				{
-					decipher_msg[i] = msg.msg[j];
+					decipher_msg[i] = msg[j];
 					j++;
 				}
 				j = 0;
@@ -170,36 +174,33 @@ int main()
 		}
 	}
 #ifdef debug_comunication_on	
-	Echo("decipher msg");
+	puts("decipher msg\n");
     for(x=0; x<MSG_LENGHT-1;x++){
-		Echo(itoh(decipher_msg[x]));		
 	}
 #endif
 	//  End tasks still running
 	//  End Applicattion
 	for(x=0; x < NUMBER_OF_SLAVES; x++){
-		msg.length = sizeof(aux_msg);
+		size = sizeof(aux_msg);
 		aux_msg[0] = END_TASK;
 		aux_msg[1] = 0;
-		memcpy(&msg.msg, &aux_msg, 4*msg.length);
-		Send(&msg, Slave[x]);  
-	}	
-    Echo("task AES finished.");
-    Echo(itoa(GetTick()));
+		memcpy(msg1, &aux_msg, 4*size);
+		send_msg(Slave[x], (unsigned int*)msg1, sizeof(msg1));
+  		}	
+    puts("task AES finished.\n");
 
 //#ifdef debug_comunication_on	
-	Echo(" ");
-	Echo("Final Result");
+	puts(" ");
+	puts("Final Result\n");
 	unsigned int int_aux2 = 0;
     for(x=0; x<MSG_LENGHT;x+=4){
 		int_aux2 = decipher_msg[0+x] << 24;
 		int_aux2 = int_aux2 | decipher_msg[1+x] << 16;
 		int_aux2 = int_aux2 | decipher_msg[2+x] << 8;
 		int_aux2 = int_aux2 | decipher_msg[3+x];
-		Echo( &int_aux2 );
+		puts( &int_aux2 );
 		int_aux2 = 0;
 	}
 //#endif 
-
-	exit();		
+	exit();
 }

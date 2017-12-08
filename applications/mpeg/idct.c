@@ -1,16 +1,3 @@
-/*---------------------------------------------------------------------
-TITLE: Program Scheduler
-AUTHOR: Nicolas Saint-jean
-EMAIL : saintjea@lirmm.fr
-DATE CREATED: 04/04/06
-FILENAME: task3.c
-PROJECT: Network Process Unit
-COPYRIGHT: Software placed into the public domain by the author.
-           Software 'as is' without warranty.  Author liable for nothing.
-DESCRIPTION: This file contains the task3
----------------------------------------------------------------------*/
-
-
 // **********************************************************************************************************
 // *                                 IDCT.C                                                                 *
 // *                                                                                                        *
@@ -38,8 +25,9 @@ DESCRIPTION: This file contains the task3
 // *  Number of clock cycles (with these inEcho) -> 4150 Cicli                                              *
 // **********************************************************************************************************
 
-#include <api.h>
-#include <stdlib.h>
+
+#include <libos.h>
+#include "map_pkg.h"
 #include "mpeg_std.h"
 
 typedef int type_DATA; //unsigned
@@ -57,9 +45,6 @@ typedef int type_DATA; //unsigned
 // * Image block to be un-transformed:
 
 int out;
-
-Message msg1;
-
 
 /* iclip table */
 short int iclp[1024] = {
@@ -223,35 +208,31 @@ void idct_func(type_DATA *block,int lx)
 
 int main()
 {
-    unsigned int time_a, time_b;
+    printf("MPEG Task D start: iDCT ");
     int i,j;
     type_DATA block[64];
-
-
-    Echo("MPEG Task D start: iDCT ");
-    Echo(itoa(GetTick()));
+    int msg1[128];
+    int size;
+    int *buff;
+    int src;
 
     for(j=0;j<MPEG_FRAMES;j++)
     {
-        Receive(&msg1,iquant);
-
-        for(i=0;i<msg1.length;i++)
-            block[i] = msg1.msg[i];
+        prepare_recv_msg(&src, &size);
+        buff = wait_receive();
+        printf("Received msg1\n");
+        for(i=0;i<size;i++)
+            block[i] = buff[i];
 
         idct_func(block, 8);  // 8x8 Blocks
 
-        msg1.length = 64;
-        for(i=0; i<msg1.length; i++)
-            msg1.msg[i] = block[i];
-
-
-        Send(&msg1,print);
-
+        for(i=0; i<size; i++)
+            msg1[i] = block[i];
+        printf("Sending print\n");
+        send_msg(print, &msg1, sizeof(msg1));
     }
-
-    Echo(itoa(GetTick()));
-    Echo("End Task D - MPEG");
-
+    free(buff);
+    printf("End Task D - MPEG\n");
     exit();
 }
 

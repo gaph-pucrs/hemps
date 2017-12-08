@@ -8,7 +8,7 @@
 #define FALSE 0
 
 //#define debug_aes_on
-#define debug_comunication_on
+//#define debug_comunication_on
 
 #define KEY_SIZE	256
 #define AES_BLOCK_SIZE 16        // AES operates on 16 bytes at a time
@@ -314,19 +314,19 @@ void AddRoundKey(BYTE state[][4], const WORD w[])
 	subkey[2] = (w[0] >> 8) & 0xFF;
 	subkey[3] = (w[0]) & 0xFF;
 	
-	//Echo(" ");
-	//Echo("subkey");
+	//puts(" ");
+	//puts("subkey");
 	//for(j=0; j<4;j++){
-	//	Echo(itoh(subkey[j]));		
+	//	puts(itoh(subkey[j]));		
 	//}
-	//Echo(" ");	
+	//puts(" ");	
 	//
-	//Echo(" ");
-	//Echo("state");
+	//puts(" ");
+	//puts("state");
 	//for(j=0; j<4;j++){
-	//	Echo(itoh(state[j][0]));		
+	//	puts(itoh(state[j][0]));		
 	//}
-	//Echo(" ");	
+	//puts(" ");	
 		
 	state[0][0] ^= subkey[0];
 	state[1][0] ^= subkey[1];
@@ -361,14 +361,14 @@ void AddRoundKey(BYTE state[][4], const WORD w[])
 	state[3][3] ^= subkey[3];
 
 #ifdef debug_aes_on	
-	Echo(" ");
-	Echo("AddRoundKey");
+	puts(" ");
+	puts("AddRoundKey");
 	for(i=0; i<4;i++){
 		for(j=0; j<4;j++){
-			Echo(itoh(state[j][i]));		
+			puts(itoh(state[j][i]));		
 		}
 	}
-	Echo(" ");		
+	puts(" ");		
 #endif
 	
 }
@@ -402,14 +402,14 @@ void SubBytes(BYTE state[][4])
 	state[3][3] = aes_sbox[state[3][3] >> 4][state[3][3] & 0x0F];
 	
 #ifdef debug_aes_on	
-	Echo(" ");
-	Echo("SubBytes");
+	puts(" ");
+	puts("SubBytes");
 	for(i=0; i<4;i++){
 		for(j=0; j<4;j++){
-			Echo(itoh(state[j][i]));		
+			puts(itoh(state[j][i]));		
 		}
 	}
-	Echo(" ");		
+	puts(" ");		
 #endif	
 	
 }
@@ -437,14 +437,14 @@ void InvSubBytes(BYTE state[][4])
 	state[3][3] = aes_invsbox[state[3][3] >> 4][state[3][3] & 0x0F];
 
 #ifdef debug_aes_on	
-	Echo(" ");
-	Echo("InvSubBytes");
+	puts(" ");
+	puts("InvSubBytes");
 	for(i=0; i<4;i++){
 		for(j=0; j<4;j++){
-			Echo(itoh(state[j][i]));		
+			puts(itoh(state[j][i]));		
 		}
 	}
-	Echo(" ");		
+	puts(" ");		
 #endif		
 	
 }
@@ -482,14 +482,14 @@ void ShiftRows(BYTE state[][4])
 	state[3][1] = t;
 
 #ifdef debug_aes_on	
-	Echo(" ");
-	Echo("ShiftRows");
+	puts(" ");
+	puts("ShiftRows");
 	for(i=0; i<4;i++){
 		for(j=0; j<4;j++){
-			Echo(itoh(state[j][i]));		
+			puts(itoh(state[j][i]));		
 		}
 	}
-	Echo(" ");		
+	puts(" ");		
 #endif		
 
 	
@@ -523,14 +523,14 @@ void InvShiftRows(BYTE state[][4])
 	state[3][2] = t;
 
 #ifdef debug_aes_on	
-	Echo(" ");
-	Echo("InvShiftRows");
+	puts(" ");
+	puts("InvShiftRows");
 	for(i=0; i<4;i++){
 		for(j=0; j<4;j++){
-			Echo(itoh(state[j][i]));		
+			puts(itoh(state[j][i]));		
 		}
 	}
-	Echo(" ");		
+	puts(" ");		
 #endif			
 		
 }
@@ -635,14 +635,14 @@ void MixColumns(BYTE state[][4])
 	state[3][3] ^= gf_mul[col[3]][0];
 
 #ifdef debug_aes_on	
-	Echo(" ");
-	Echo("MixColumns");
+	puts(" ");
+	puts("MixColumns");
 	for(i=0; i<4;i++){
 		for(j=0; j<4;j++){
-			Echo(itoh(state[j][i]));		
+			puts(itoh(state[j][i]));		
 		}
 	}
-	Echo(" ");		
+	puts(" ");		
 #endif		
 	
 }
@@ -738,14 +738,14 @@ void InvMixColumns(BYTE state[][4])
 	state[3][3] ^= gf_mul[col[2]][2];
 	state[3][3] ^= gf_mul[col[3]][5];
 #ifdef debug_aes_on	
-	Echo(" ");
-	Echo("InvMixColumns");
+	puts(" ");
+	puts("InvMixColumns");
 	for(i=0; i<4;i++){
 		for(j=0; j<4;j++){
-			Echo(itoh(state[j][i]));		
+			puts(itoh(state[j][i]));		
 		}
 	}
-	Echo(" ");		
+	puts(" ");		
 #endif		
 	
 }
@@ -768,12 +768,12 @@ void aes_encrypt(const BYTE in[], BYTE out[], const WORD key[], int keysize)
 	// column, then row. Accessing an element in C requires row then column. Thus, all state
 	// references in AES must have the column and row indexes reversed for C implementation.
 	
-	//Echo(" ");
-	//Echo("in");
+	//puts(" ");
+	//puts("in");
 	//for(i=0; i<AES_BLOCK_SIZE;i++){
-	//	Echo(itoh(in[i]));		
+	//	puts(itoh(in[i]));		
 	//}
-	//Echo(" ");
+	//puts(" ");
 	
 	state[0][0] = in[0];
 	state[1][0] = in[1];
@@ -792,47 +792,47 @@ void aes_encrypt(const BYTE in[], BYTE out[], const WORD key[], int keysize)
 	state[2][3] = in[14];
 	state[3][3] = in[15];
 	
-	//Echo(" ");
-	//Echo("state");
+	//puts(" ");
+	//puts("state");
 	//for(i=0; i<4;i++){
 	//	for(j=0; j<4;j++){
-	//		Echo(itoh(state[j][i]));		
+	//		puts(itoh(state[j][i]));		
 	//	}
 	//}
-	//Echo(" ");
+	//puts(" ");
 
 	// Perform the necessary number of rounds. The round key is added first.
 	// The last round does not perform the MixColumns step.
 	AddRoundKey(state,&key[0]);
-	Echo("ROUND 0 finished.");
+	puts("ROUND 0 finished.");
 	SubBytes(state); ShiftRows(state); MixColumns(state); AddRoundKey(state,&key[4]);
-	//Echo("ROUND 1 finished.");
+	//puts("ROUND 1 finished.");
 	SubBytes(state); ShiftRows(state); MixColumns(state); AddRoundKey(state,&key[8]);
-	//Echo("ROUND 2 finished.");
+	//puts("ROUND 2 finished.");
 	SubBytes(state); ShiftRows(state); MixColumns(state); AddRoundKey(state,&key[12]);
-	//Echo("ROUND 3 finished.");
+	//puts("ROUND 3 finished.");
 	SubBytes(state); ShiftRows(state); MixColumns(state); AddRoundKey(state,&key[16]);
-	//Echo("ROUND 4 finished.");
+	//puts("ROUND 4 finished.");
 	SubBytes(state); ShiftRows(state); MixColumns(state); AddRoundKey(state,&key[20]);
-	//Echo("ROUND 5 finished.");
+	//puts("ROUND 5 finished.");
 	SubBytes(state); ShiftRows(state); MixColumns(state); AddRoundKey(state,&key[24]);
-	//Echo("ROUND 6 finished.");
+	//puts("ROUND 6 finished.");
 	SubBytes(state); ShiftRows(state); MixColumns(state); AddRoundKey(state,&key[28]);
-	//Echo("ROUND 7 finished.");
+	//puts("ROUND 7 finished.");
 	SubBytes(state); ShiftRows(state); MixColumns(state); AddRoundKey(state,&key[32]);
-	//Echo("ROUND 8 finished.");
+	//puts("ROUND 8 finished.");
 	SubBytes(state); ShiftRows(state); MixColumns(state); AddRoundKey(state,&key[36]);
-	//Echo("ROUND 9 finished.");
+	//puts("ROUND 9 finished.");
 	if (keysize != 128) {
 		SubBytes(state); ShiftRows(state); MixColumns(state); AddRoundKey(state,&key[40]);
-		//Echo("ROUND 10 finished.");
+		//puts("ROUND 10 finished.");
 		SubBytes(state); ShiftRows(state); MixColumns(state); AddRoundKey(state,&key[44]);
-		//Echo("ROUND 11 finished.");
+		//puts("ROUND 11 finished.");
 		if (keysize != 192) {
 			SubBytes(state); ShiftRows(state); MixColumns(state); AddRoundKey(state,&key[48]);
-			//Echo("ROUND 12 finished.");
+			//puts("ROUND 12 finished.");
 			SubBytes(state); ShiftRows(state); MixColumns(state); AddRoundKey(state,&key[52]);
-			//Echo("ROUND 13 finished.");
+			//puts("ROUND 13 finished.");
 			SubBytes(state); ShiftRows(state); AddRoundKey(state,&key[56]);
 		}
 		else {
@@ -842,7 +842,7 @@ void aes_encrypt(const BYTE in[], BYTE out[], const WORD key[], int keysize)
 	else {
 		SubBytes(state); ShiftRows(state); AddRoundKey(state,&key[40]);
 	}
-	Echo("ROUND Final finished.");
+	puts("ROUND Final finished.");
 	// Copy the state to the output array.
 	out[0] = state[0][0];
 	out[1] = state[1][0];
@@ -861,10 +861,10 @@ void aes_encrypt(const BYTE in[], BYTE out[], const WORD key[], int keysize)
 	out[14] = state[2][3];
 	out[15] = state[3][3];
 	
-	//Echo(" ");
-	//Echo("out");
+	//puts(" ");
+	//puts("out");
 	//for(i=0; i<AES_BLOCK_SIZE;i++){
-	//	Echo(itoh(out[i]));		
+	//	puts(itoh(out[i]));		
 	//}
 }
 
@@ -896,20 +896,20 @@ void aes_decrypt(const BYTE in[], BYTE out[], const WORD key[], int keysize)
 	if (keysize > 128) {
 		if (keysize > 192) {
 			AddRoundKey(state,&key[56]);
-			Echo("ROUND 0 finished.");
+			puts("ROUND 0 finished.");
 			InvShiftRows(state);InvSubBytes(state);AddRoundKey(state,&key[52]);InvMixColumns(state);
 			InvShiftRows(state);InvSubBytes(state);AddRoundKey(state,&key[48]);InvMixColumns(state);
 		}
 		else {
 			AddRoundKey(state,&key[48]);
-			Echo("ROUND 0 finished.");
+			puts("ROUND 0 finished.");
 		}
 		InvShiftRows(state);InvSubBytes(state);AddRoundKey(state,&key[44]);InvMixColumns(state);
 		InvShiftRows(state);InvSubBytes(state);AddRoundKey(state,&key[40]);InvMixColumns(state);
 	}
 	else {
 		AddRoundKey(state,&key[40]);
-		Echo("ROUND 0 finished.");
+		puts("ROUND 0 finished.");
 	}
 	InvShiftRows(state);InvSubBytes(state);AddRoundKey(state,&key[36]);InvMixColumns(state);
 	InvShiftRows(state);InvSubBytes(state);AddRoundKey(state,&key[32]);InvMixColumns(state);
@@ -921,7 +921,7 @@ void aes_decrypt(const BYTE in[], BYTE out[], const WORD key[], int keysize)
 	InvShiftRows(state);InvSubBytes(state);AddRoundKey(state,&key[8]);InvMixColumns(state);
 	InvShiftRows(state);InvSubBytes(state);AddRoundKey(state,&key[4]);InvMixColumns(state);
 	InvShiftRows(state);InvSubBytes(state);AddRoundKey(state,&key[0]);
-	Echo("ROUND Final finished.");
+	puts("ROUND Final finished.");
 
 	// Copy the state to the output array.
 	out[0] = state[0][0];

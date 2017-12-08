@@ -1,19 +1,6 @@
-/*---------------------------------------------------------------------
-TITLE: Program Scheduler
-AUTHOR: Nicolas Saint-jean
-EMAIL : saintjea@lirmm.fr
-DATE CREATED: 04/04/06
-FILENAME: task2.c
-PROJECT: Network Process Unit
-COPYRIGHT: Software placed into the public domain by the author.
-           Software 'as is' without warranty.  Author liable for nothing.
-DESCRIPTION: This file contains the task2
----------------------------------------------------------------------*/
-
-#include <api.h>
-#include <stdlib.h>
+#include <libos.h>
+#include "map_pkg.h"
 #include "mpeg_std.h"
-
 unsigned int vlc_array[128] = { // array containing the compressed data stream
                                  // It must be specified as an input
                                  0xfa,0xb8,0x20,0x05,0x20,0x20,0x02,0x38,
@@ -27,38 +14,23 @@ unsigned int vlc_array[128] = { // array containing the compressed data stream
                                  0xa7,0x3c,0x73,0xb6,0x31,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,
                                  1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1};
 
-Message msg1;
-
 int main(){
-
-   unsigned int time_a, time_b;
-   int i;
-
-   Echo("MPEG Task A start:  ");
-   Echo(itoa(GetTick()));
-
+  puts("MPEG started\n");
+  int i;
+  int size;
+  int msg1[128];
 
    for(i=0; i<128; i++)
-        msg1.msg[i] = vlc_array[i];
+     msg1[i] = vlc_array[i];
 
-
-    msg1.length = 128;
-
+    size = 128;
     for(i=0;i<MPEG_FRAMES;i++)                          // send 8 times the array to task 2
 	   {
-		   time_a = GetTick();
-		   Send(&msg1,ivlc);
-		   time_b = GetTick();
-
-		   Echo("T1");
-           Echo(itoa(time_a));
-		   Echo("T2");
-           Echo(itoa(time_b));
-
+      printf("Sending %d bytes %X\n", size, msg1);
+      send_msg(ivlc, (unsigned int*)msg1, sizeof(msg1));
 	   }
-
-    Echo(itoa(GetTick()));
-    Echo("End Task A - MPEG");
+     
+    printf("End Task A - MPEG\n");
 
     exit();
 }

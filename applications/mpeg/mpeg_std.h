@@ -8,7 +8,7 @@
 #ifndef MPEG_STD_H_
 #define MPEG_STD_H_
 
-#define MPEG_FRAMES				20
+#define MPEG_FRAMES				40
 
 
 #endif /* PACKAGE_H_ */

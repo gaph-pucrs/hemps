@@ -3,3 +3,4 @@
 \#*\#
 *.o
 *.vlw
+.DS_Store

@@ -1,15 +1,3 @@
-/*---------------------------------------------------------------------
-TITLE: Program Scherduler
-AUTHOR: Nicolas Saint-jean
-EMAIL : saintjea@lirmm.fr
-DATE CREATED: 04/04/06
-FILENAME: task1.c
-PROJECT: Network Process Unit
-COPYRIGHT: Software placed into the public domain by the author.
-           Software 'as is' without warranty.  Author liable for nothing.
-DESCRIPTION: This file contains the task1
----------------------------------------------------------------------*/
-
 // *********************************************************************************************************
 // *                      IVLC.C                                                                           *
 // *                                                                                                       *
@@ -34,8 +22,8 @@ DESCRIPTION: This file contains the task1
 // *  Number of clock cycles (with these inEcho) -> 57026                                                  *
 // *********************************************************************************************************
 
-#include <api.h>
-#include <stdlib.h>
+#include <libos.h>
+#include "map_pkg.h"
 #include "mpeg_std.h"
 
 typedef int type_DATA; //unsigned
@@ -460,42 +448,37 @@ void ivlc_func(type_DATA *block, short int comp, short int lx, type_DATA *buffer
   return;
 }
 
-Message msg1;
-
 int main()
 {
-	unsigned int time_a, time_b;
+  puts("MPEG Task B start: iVLC \n");
+  int msg1[128];
+  int size;
+  int *buff;
+  int src;
 	int i,j;
 
 	type_DATA vlc_array[128];
 	type_DATA block[64];
 
-	Echo("MPEG Task B start: iVLC ");
-	Echo(itoa(GetTick()));
-
 	for(j=0;j<MPEG_FRAMES;j++)
 	{
-
-		Receive(&msg1,start);
-
-		for(i=0; i<msg1.length; i++)
-			vlc_array[i] = msg1.msg[i];
+    prepare_recv_msg(&src, &size);
+		buff = wait_receive();
+    puts("Received msg1\n");
+		for(i=0; i<size; i++)
+			vlc_array[i] = buff[i];
 
 		for(i=0; i<64; i++)
 			block[i] = 0;
 
 		ivlc_func(block, 0, 8, vlc_array);	    // codifica RLE-VLC (returns the number of bits in the produced stream)
 
-		msg1.length = 64;
-		for(i=0; i<msg1.length; i++)
-		   msg1.msg[i] = block[i];
-
-        Send(&msg1,iquant);
-
+		for(i=0; i<size; i++)
+		   msg1[i] = block[i];
+        send_msg(iquant, (unsigned int*)msg1, sizeof(msg1));
+        puts("Sending to Iquant\n");
 	}
-
-	Echo(itoa(GetTick()));
-	Echo("End Task B - MPEG");
-
-	exit();
+  free(buff);
+	printf("End Task B - MPEG\n");
+  exit();
 }

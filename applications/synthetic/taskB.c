@@ -1,27 +1,23 @@
-#include <api.h>
-#include <stdlib.h>
+
+#include <libos.h>
+#include "map_pkg.h"
 #include "syn_std.h"
-
-Message msg;
-
 int main()
 {
 	
 	int i, j,t;
+	int msg1[30];
+	int size;
 
-    Echo("synthetic task B started.");
-	Echo(itoa(GetTick()));
+    	puts("synthetic task B started.\n");
 	
-for(i=0;i<SYNTHETIC_ITERATIONS;i++){
+	for(i=0;i<SYNTHETIC_ITERATIONS;i++){
 	for(t=0;t<1000;t++){
 	}	
-	msg.length = 30;
-	for(j=0;j<30;j++) msg.msg[j]=i;
-
-	Send(&msg,taskC);
-}
-
-    Echo(itoa(GetTick()));
-    Echo("synthetic task B finished.");
-	exit();
+	size = 30;
+	for(j=0;j<30;j++) msg1[j]=i;
+	send_msg(taskC, msg1, size);
+	}
+    puts("synthetic task B finished.\n");
+    exit();
 }

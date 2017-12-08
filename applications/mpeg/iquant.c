@@ -36,14 +36,12 @@ DESCRIPTION: This file contains the task2
 // *  Number of clock cycles (with these inEcho) -> 4214                                                   *
 // *********************************************************************************************************
 
-
-#include <api.h>
-#include <stdlib.h>
+#include <libos.h>
+#include "map_pkg.h"
 #include "mpeg_std.h"
 
 typedef int type_DATA; //unsigned
 
-Message msg1;
 
 
 unsigned char intramatrix[64]={
@@ -86,37 +84,34 @@ void iquant_func(type_DATA *src, int lx, int dc_prec, int mquant)
 
 int main()
 {
-    unsigned int time_a, time_b;
-	int i,j;
 
+    int msg1[128];
+    int size;
+    int *buff;
+    int src;
+	  int i,j;
     type_DATA clk_count;
     type_DATA block[64];
-
-
-    Echo("MPEG Task C start: iquant ");
-    Echo(itoa(GetTick()));
+    puts("MPEG Task C start: iquant \n");
 
     for(j=0;j<MPEG_FRAMES;j++)
     {
-       Receive(&msg1,ivlc);
-
-       for(i=0;i<msg1.length;i++)
-            block[i] = msg1.msg[i];
+        prepare_recv_msg(&src, &size);
+        buff = wait_receive();
+        puts("Received msg1\n");
+        for(i=0;i<size;i++)
+            block[i] = buff[i];
 
         iquant_func(block, 8, 0, 1);  // 8x8 Blocks, DC precision value = 0, Quantization coefficient (mquant) = 64
 
-        msg1.length = 64;
-        for(i=0; i<msg1.length; i++)
-            msg1.msg[i] = block[i];
+        for(i=0; i<size; i++)
+            msg1[i] = block[i];
+          puts("Sending to idct\n");
+        send_msg(idct, (unsigned int*)msg1, sizeof(msg1));
 
-        Send(&msg1,idct);
-
-    }
-
-   Echo(itoa(GetTick()));
-   Echo("End Task C- MPEG");
+   free(buff);
+   printf("End Task C- MPEG\n");
 
    exit();
+    }
 }
-
-
