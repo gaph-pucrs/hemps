@@ -67,14 +67,14 @@ void send_msg(flit_t target, void *msg, size_t len) {
 
   /* waits previous operation to finish
    * this avoids overwriting previous buffer pointer */
-  //old_buff = wait_receive();
+  old_buff = wait_receive();
 
   transmit(target, REQ_OPERATION, &msg_req, sizeof(msg_req_t));
   prepare_receive(&ack_reply);
   wait_receive();
 
   // restauring previous buffer
-  //MemoryWrite32(DMNI_RECEIVE_BUFFER, (size_t)old_buff & 1);
+  MemoryWrite32(DMNI_RECEIVE_BUFFER, (size_t)old_buff | 1);
 
   if((ack_reply.addr != msg_req.addr))
     panic("Received ACK diverges from expected\n");

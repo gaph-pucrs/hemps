@@ -101,9 +101,11 @@ extern uint8_t _stack;
 #define MemoryRead8(A) (*(volatile uint8_t*)(A))
 #define MemoryWrite8(A,V) *(volatile uint8_t*)(A)=(V)
 
-// Stubs, need real implementation if running on real hardware
-static inline int enter_critical() { return 0; }
-static inline void leave_critical(int i) {}
+// Stubs, need implementation if running on sharedmemory platforms
+static inline int  __attribute__((unused)) enter_critical () { return 0; }
+
+static inline void  __attribute__((unused))
+leave_critical(int  __attribute__((unused)) i) {}
 
 
 #endif
