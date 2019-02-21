@@ -2,4 +2,5 @@
 
 Site: http://www.inf.pucrs.br/hemps/
 
-Plataforma de desenvolvimento em redes intrachip.
+Plataforma de desenvolvimento de sistemas intra-chip multiprocessados.
+Many-core System-on-Chip developing platform.
