@@ -6,6 +6,9 @@ Version: 1.0 - sep/2018							*
 Authors: Marcelo Ruaro and Fernando Moraes      *
 *************************************************
 
+NOTE: This version of Memphis is OUTDATED. Please use the git reposiotory: https://github.com/GaphGroup/Memphis
+
+
 Prerequisites:
  - Ubuntu 16 +
  - Java
