@@ -1,0 +1,53 @@
+BASEDIR = ../..
+BAREOS_DIR = $(BASEDIR)/software/bareOS
+TRIPLET = mips-elf
+CC = $(TRIPLET)-gcc
+CFLAGS = -I$(BAREOS_DIR)/include -O2 -fno-builtin -Wall -fms-extensions -nostdinc
+AS = $(TRIPLET)-as
+ASFLAGS = 
+CPP = $(TRIPLET)-g++
+CCFLAGS = $(CFLAGS)
+LD = $(TRIPLET)-ld
+LDFLAGS = -nostdlib -T$(BAREOS_DIR)/hemps.ld --defsym=_stack=$(PAGE_SP_INIT)
+OBJCOPY = $(TRIPLET)-objcopy
+OBJDUMP = $(TRIPLET)-objdump
+
+PROGNAME = $(basename $(wildcard *.c))
+
+DUMP_FILES = $(addsuffix .dump, $(PROGNAME))
+LST_FILES = $(addsuffix .lst, $(PROGNAME))
+TXT_FILES = $(addsuffix .txt, $(PROGNAME))
+BIN_FILES = $(addsuffix .bin, $(PROGNAME))
+
+BARE_OS = $(BAREOS_DIR)/crt0.o \
+					$(BAREOS_DIR)/hal.o \
+					$(BAREOS_DIR)/libos.o \
+					$(BAREOS_DIR)/malloc.o \
+					$(BAREOS_DIR)/comm.o
+
+
+all : $(DUMP_FILES) $(LST_FILES) $(TXT_FILES) $(BIN_FILES)
+
+%.dump : %.bin
+	$(OBJCOPY) -O binary $< $@
+
+%.lst : %.bin
+	$(OBJDUMP) -d $< > $@
+
+%.txt : %.dump
+	hexdump -v -e '1/1 "%02x" 1/1 "%02x" 1/1 "%02x" 1/1 "%02x" "\n"' $< > $@
+
+%.o: %.c
+	$(CC) $(CFLAGS) -o $@ -c $<
+
+%.o: %.cpp
+	$(CPP) $(CCFLAGS) -o $@ -c $<
+
+%.o: %.s
+	$(AS) $(ASFLAGS) -o $@ $<
+
+%.bin: $(BARE_OS) %.o
+	$(LD) -o $@ $+ $(LDFLAGS)
+
+clean :
+	rm -f $(BIN_FILES) $(LST_FILES) $(BARE_OS) $(wildcard *~) $(wildcard *.o) 

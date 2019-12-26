@@ -1,0 +1,72 @@
+make: Entering directory '/home/anderson/Documents/hemps/hemps8.5/testcases/teste_2x2_vhdl_ativ2'
+
+
+  _   _      __  __ ____  ____     ___   _____ 
+ | | | | ___|  \//  |  _ \// ___|   ( _ ) |___ // 
+ | |_| |// _ \ |\//| | |_) \___ \   // _ \   |_ \ 
+ |  _  |  __// |  | |  __// ___) | | (_) | ___) |
+ |_| |_|\___|_|  |_|_|   |____//   \___(_)____// 
+                                               
+                                                                                          
+OBS:
+	1. Renaming local_scheduler   -> task_scheduler
+		1.a - Improvements on LST task scheduler to a better deadline miss monitoring
+	2. Renaming cluster_scheduler -> resource_manager
+                            
+
+make[1]: Entering directory '/home/anderson/Documents/hemps/hemps8.5/testcases/teste_2x2_vhdl_ativ2/applications'
+make[2]: Entering directory '/home/anderson/Documents/hemps/hemps8.5/testcases/teste_2x2_vhdl_ativ2/applications/pc1'
+make[2]: Nothing to be done for 'default'.
+make[2]: Leaving directory '/home/anderson/Documents/hemps/hemps8.5/testcases/teste_2x2_vhdl_ativ2/applications/pc1'
+make[2]: Entering directory '/home/anderson/Documents/hemps/hemps8.5/testcases/teste_2x2_vhdl_ativ2/applications/pc2'
+make[2]: Nothing to be done for 'default'.
+make[2]: Leaving directory '/home/anderson/Documents/hemps/hemps8.5/testcases/teste_2x2_vhdl_ativ2/applications/pc2'
+make[1]: Leaving directory '/home/anderson/Documents/hemps/hemps8.5/testcases/teste_2x2_vhdl_ativ2/applications'
+
+***************** task page size report ***********************
+Memory size (32KB) OK for file <applications/pc2/taskA.bin>	 with size (3.0KB)
+Memory size (32KB) OK for file <applications/pc2/taskB.bin>	 with size (3.0KB)
+Memory size (32KB) OK for file <applications/pc1/taskA.bin>	 with size (3.0KB)
+Memory size (32KB) OK for file <applications/pc1/taskB.bin>	 with size (3.0KB)
+***************** end task page size report *********************
+
+
+***************** repository size report ***********************
+Repository size (7.0KB) OK for size informed within yaml file (1024KB)
+***************** end repository size report ***********************
+
+make[1]: Entering directory '/home/anderson/Documents/hemps/hemps8.5/testcases/teste_2x2_vhdl_ativ2/software'
+[0;31mCompiling Kernel modules/utils.c ...[0m 
+mips-elf-gcc -O2 -Wall -fms-extensions -c -s -std=c99 -G 0 -o modules/utils.o modules/utils.c
+[0;31mCompiling Kernel modules/packet.c ...[0m 
+mips-elf-gcc -O2 -Wall -fms-extensions -c -s -std=c99 -G 0 -o modules/packet.o modules/packet.c
+[0;31mCompiling Kernel modules/applications.c ...[0m 
+mips-elf-gcc -O2 -Wall -fms-extensions -c -s -std=c99 -G 0 -o modules/applications.o modules/applications.c
+[0;31mCompiling Kernel modules/pending_service.c ...[0m 
+mips-elf-gcc -O2 -Wall -fms-extensions -c -s -std=c99 -G 0 -o modules/pending_service.o modules/pending_service.c
+[0;31mCompiling Kernel modules/reclustering.c ...[0m 
+mips-elf-gcc -O2 -Wall -fms-extensions -c -s -std=c99 -G 0 -o modules/reclustering.o modules/reclustering.c
+[0;31mCompiling Kernel modules/new_task.c ...[0m 
+mips-elf-gcc -O2 -Wall -fms-extensions -c -s -std=c99 -G 0 -o modules/new_task.o modules/new_task.c
+[0;31mCompiling Kernel modules/communication.c ...[0m 
+mips-elf-gcc -O2 -Wall -fms-extensions -c -s -std=c99 -G 0 -o modules/communication.o modules/communication.c
+[0;31mCompiling Kernel modules/processors.c ...[0m 
+mips-elf-gcc -O2 -Wall -fms-extensions -c -s -std=c99 -G 0 -o modules/processors.o modules/processors.c
+[0;31mCompiling Kernel modules/task_control.c ...[0m 
+mips-elf-gcc -O2 -Wall -fms-extensions -c -s -std=c99 -G 0 -o modules/task_control.o modules/task_control.c
+[0;31mCompiling Kernel modules/task_location.c ...[0m 
+mips-elf-gcc -O2 -Wall -fms-extensions -c -s -std=c99 -G 0 -o modules/task_location.o modules/task_location.c
+[0;31mCompiling Kernel modules/task_migration.c ...[0m 
+mips-elf-gcc -O2 -Wall -fms-extensions -c -s -std=c99 -G 0 -o modules/task_migration.o modules/task_migration.c
+[0;31mCompiling Kernel modules/task_scheduler.c ...[0m 
+mips-elf-gcc -O2 -Wall -fms-extensions -c -s -std=c99 -G 0 -o modules/task_scheduler.o modules/task_scheduler.c
+[0;31mCompiling Kernel modules/resource_manager.c ...[0m 
+mips-elf-gcc -O2 -Wall -fms-extensions -c -s -std=c99 -G 0 -o modules/resource_manager.o modules/resource_manager.c
+[0;31mCompiling Kernel Master: kernel_master.c ...[0m 
+mips-elf-as --defsym sp_addr=65535 -o boot_master.o kernel/master/boot.S
+mips-elf-gcc -O2 -Wall -fms-extensions -c -s -std=c99 -G 0 -DHOP_NUMBER=1 -Dload -o kernel_master.o kernel/master/kernel_master.c  -D IS_MASTER
+mips-elf-ld -Ttext 0 -eentry -Map kernel_master.map -s -N -o kernel_master.bin boot_master.o kernel_master.o modules/utils.o modules/packet.o modules/applications.o modules/reclustering.o modules/new_task.o modules/communication.o modules/processors.o modules/resource_manager.o ../include/kernel_pkg.o
+makefile:51: recipe for target 'kernel_master.txt' failed
+make[1]: Leaving directory '/home/anderson/Documents/hemps/hemps8.5/testcases/teste_2x2_vhdl_ativ2/software'
+makefile:18: recipe for target 'kernel' failed
+make: Leaving directory '/home/anderson/Documents/hemps/hemps8.5/testcases/teste_2x2_vhdl_ativ2'

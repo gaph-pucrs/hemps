@@ -1,0 +1,25 @@
+hw:
+  page_size_KB: 32
+  tasks_per_PE: 1 
+  repository_size_MB: 1
+  model_description: vhdl
+  noc_buffer_size: 8
+  mpsoc_dimension: [3,3]
+  cluster_dimension: [3,3]
+  master_location: LB
+  simple_soc: true
+  open_port:
+    - port: [0,0,S]
+apps: 
+  - name: mpeg
+    tasks:
+      - task: start
+        location: [0,0]
+      - task: ivlc
+        location: [0,1]
+      - task: iquant
+        location: [0,2]
+      - task: idct
+        location: [1,0]
+      - task: print
+        location: [1,1]

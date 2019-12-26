@@ -1,0 +1,15 @@
+hw:
+   page_size_KB:  32
+   tasks_per_PE: 1     
+   repository_size_MB:  1
+   model_description: vhdl    # sc (gcc) | scmod (questa) | vhdl
+   noc_buffer_size: 8       # must be power of 2 
+   mpsoc_dimension: [2,2]     # for while, must be a square shape
+   cluster_dimension: [2,2] # for while, must be a square shape
+   master_location: LB      # LB
+
+apps:                
+  - name: transmit
+    start_time_ms: 0 #any unsigned integer number
+
+

@@ -1,0 +1,4 @@
+module load systemc mips-elf/4.1.1-hemps questa
+
+export HEMPS_PATH=$(pwd)
+export PATH=${PATH}:${HEMPS_PATH}/build_env/bin
